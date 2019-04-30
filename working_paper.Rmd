@@ -1,0 +1,190 @@
+---
+title: "Working Paper"
+author: "Simarpreet Singh"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    code_folding: show
+    number_sections: true
+    collapsed: false
+    theme: paper
+    highlight: zenburn
+    
+---
+
+# Notes 
+
+**Will be removed in the final paper**
+
+* **OpenJustice** - *Crimes and Clearances Data (Including Arson)*
+  + [Download Data](https://openjustice.doj.ca.gov/downloads/Crimes_and_Clearances_with_Arson-1985-2017.csv)
+  + [Download Data Dictionary](https://openjustice.doj.ca.gov/downloads/Crimes-Clear-Arson%20Context.pdf)
+
+
+
+
+
+# Abstract 
+
+******
+
+In this research project, I aim to investigate the contribution of housing instability to crime rates in California. The main social theoretical question that drives this research project is: What social and institutional conditions lead to high crime rates in a community? Specifically, I will examine what crimes impact which communities and regions across California and assess housing instability in those regions, using evictions as an indicator. The empirical research questions that guide this project are: From the years 2000 to 2016 what is the distribution of crimes by county, across California? Is the distribution of Evictions across California counties correlated with the distribution of crime? What are the trends in crime and evictions in California from 2000 to 2016, and do these trends correlate with each other? What are the demographics across counties of California? For counties where Evictions are highly correlated with crime rates, is there a correlation between demographic attributes and Evictions?
+
+To address these empirical research questions, I plan to explore crime and clearances data collected by the California Department of Justice’s Open Justice program. Specifically, I will be exploring the data from years 2000 to 2016, by county in California. In addition to the crimes and clearances data, I will be looking into evictions data collected by the Eviction Lab at Princeton University, for the years of 2000 to 2016, for California counties. And lastly, to understand the demographics I will use census data, that is included in the Eviction Lab’s data collection for each corny in each year of interest. I’ll be focusing on the distribution of crime types, the distribution of evictions, ad the distribution of race and economic demographics across counties of California. I’m focussing on this time period as it is the only time period with rich data about eviction, due to the Eviction Lab’s efforts.
+
+Consumer sentiment and real estate data indicates that housing instability (i.e. eviction) has been an important factor in decreasing access to livable housing conditions for certain, often marginalized, communities (I.e. gentrification). Eviction itself is an interesting indicator of housing instability as there is subjective measure involved in deciding whether a tenant continues to occupy a property or not (i.e. a landlord’s opinion of a tenant), as compared to other causes of housing instability such as rent increases. Historically, we also know that the most marginalized communities are often the ones that are impacted the most by crime. Putting these two ideas together, it is constructive to test the hypothesis that housing instability contributes to crime rates.
+
+This topic is important to study right now because with rising housing instability becoming a larger problem, especially in places like the San Francisco Bay Area where in San Francisco almost 85% of the total population was homeless in 2017, there is concern that instability in housing causes other detriments to people’s lives, such as crime. Some concerns include the volatility of changing schools for children due to housing instability, a lack of financial resources due to instability, leading to petty theft or other crimes, and more. Studying this topic will contribute to our understanding of how housing instability interacts with crime and what populations are most affected by it across California’s counties.
+
+
+# Data Context Background 
+
+***** 
+
+The crimes and clearances dataset that I’ll primarily be working with in this project is collected by the Department of Justice’s (DOJ) Criminal Justice Statistics Center (CJSC). Both the DOJ and the CJSC are a part of the office of the California Attorney General (Currently held by Xavier Becerra). Specifically, the CJSC is an office of the DOJ whose role as a Statistical Analysis Center (SAC) “is to collect and report statistical data that allow for valid assessments of crime and the criminal justice process in California.” The data that the CJSC is collecting in this dataset is reported by law enforcement agencies (LEA) across the state. At the top-level, this data collection and aggregation by the CJSC is a part of the  Federal Bureau of Investigation’s (FBI) Uniform Crime Reporting Program (UCR). The data flows from LEAs (where it is created) to the CJSC where it is aggregated and summarized, and then through the DOJ and California Attorney General’s office where it is published at the Open Justice web portal, and lastly the entire program is mandated by the FBI’s UCR program.
+
+Though the FBI’s UCR program is based around voluntary reporting by LEAs, the program is responsible for administrating and overseeing the cooperation of 18,000 city, university, county, state, tribal, and federal LEAs to report criminal data. Legally, the California DOJ has the authority to collect the crime and clearances data based on  Government Code Sections 13010-13012 and 13020-13023.
+
+ The DOJ’s Open Justice web portal is a static web-page that provides access to several datasets that the CJSC and DOJ collect and publish. The web-page follows a fairly WYSIWYG paradigm where there are no walls in front of the data: each data set’s title, description and relevant files are listed on one page where the files are simple hyperlinks in the HTML that download when clicked. There is no API to call the data, however, the simplicity and openness of the Open Justice website make searching and retrieving the data straightforward and transparent. 
+ 
+The full dataset on crimes and clearances (including arson) has been collected from 1985 to 2017. The CJSC’s datasets are published online annually on the Open Justice web-portal. The data is collected by the CJSC as it is reported by the LEAs across the state. Meaning, the CJSC collects the raw data from the various LEAs and then aggregates it. This is important to note that the data reported is not the exact data collected. The data collected is the actual crime data whereas the data reported is statistical information - in this case, aggregate summaries -  about the raw data. This idea of reporting statistical data is emphasized by the California Attorney general’s office, specifically citing that the office’s duty is to “collect, analyze, and report statistical data, which provide valid measures of crime and the criminal justice process to government and the citizens of California.”
+
+This model of reporting statistical data implicitly means that there are certain methodologies and practices that are implemented not only at the point of collection but also in the manner the data is reported. An example of how this model of reporting the data effects how the numbers in the dataset get quantified is the hierarchy rule. The hierarchy rule is a method that is used to report multiple crimes that occured during a single event. The rule prioritizes only the most serious (based on hierarchy) crime and reports the crime alone. Therefore, if there were five crimes that could be charged at a single event, only the worst crime is reported and the others are not present in this aggregated dataset. Only arson is exempt from this rule as it often occurs alongside other crimes and therefore using this rule would significantly omit arson from the dataset. The DOJ does state that this rule should be taken into account in analyses that is done on the crimes and clearances dataset. However, this poses some vital issues that should be understood or at least questioned before performing analysis on the data. Firstly, what is the hierarchy that is used in this rule and where can information about that hierarchy and how it is constructed be found? Specifically, how are certain crimes ranked as worse than others? Secondly, how does this hierarchy affect the counting (or discounting) of certain crimes. For example, if murder is ranked as worse than sexual assault, only the murder would be counted. However, this would mechanically discount several cases where sexual assault on individual leads to their death, telling a very different story about crime. 
+
+## California Crimes and Clearances Data 
+
+
+*****
+
+```{r message=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+```
+
+```{r}
+crime_85_17_raw <- read.csv('./data/crime/crime_clearances_85-17.csv', stringsAsFactors = FALSE)
+```
+
+### Cleaning the Crime Data
+
+*****
+
+```{r}
+# filter data to 2000 to 2016
+crime_00_16_raw <- crime_85_17_raw %>% filter(Year %in% c(2000:2016))
+
+# check the years in filtered data
+levels(as.factor(crime_00_16_raw$Year))
+```
+
+**Exploring the Data's Structure**
+
+*****
+
+```{r}
+# General Structure of the data set.
+str(crime_00_16_raw)
+```
+
+
+**Looking at Null Representation**
+
+
+*****
+
+```{r}
+#View All Data
+#View(crime_00_16_raw)
+
+# ... I think there may be no NAs in this dataset (wow). Unless they are written as 0s.
+
+```
+
+**Checking for Nulls**
+
+
+*****
+
+The loop will print out which column number has NA values. Then we can insepct just those columns to see how NAs are represented. 
+
+```{r results='asis'}
+#get the columns that have NAs
+na_col <- c()
+for (i in 1:69) {
+  if (length(c(levels(as.factor(is.na(crime_00_16_raw[,i]))))) == 2) {
+    na_col <- c(na_col, i)
+  }
+}
+
+# get a boolean vector of which record is NA for the columsn found above.
+na_vals <- c()
+
+for (i in na_col) {
+  var_name <- paste("na_vals", as.character(eval(parse(text = "i"))), sep="_")
+  assign(var_name, c(na_vals, is.na(crime_00_16_raw[,i])))
+}
+
+row_bools <- list(na_vals_22, na_vals_23, na_vals_24, na_vals_25, na_vals_26)
+
+#display all records with NA data and the column that contains it.
+
+k = 1
+for (i in na_col) {
+  col_name <- as.name(colnames(crime_00_16_raw)[i])
+  # disp(col_name)
+  # print(crime_00_16_raw[row_bools[[k]],])
+  data <- crime_00_16_raw[row_bools[[k]],i]
+  # cat(paste(as.character(eval(parse(text = "col_name"))), "Data Class: ", as.character(class(crime_00_16_raw[row_bools[[k]],i])), sep="\n"))
+  cat(
+    paste(
+      as.character(eval(parse(text = "col_name"))),
+      "Data Class: ",
+      as.character(class(crime_00_16_raw[row_bools[[k]],i])),
+      sep="\n"
+    )
+  )
+  # print(data %>%
+  #   kable() %>%
+  #   kable_styling(bootstrap_options = "striped") %>%
+  #   scroll_box(width = "100%", height = "20%") %>%
+  #   footnote(general = as.character(eval(parse(text = "col_name"))))
+  # )
+  k = k + 1
+}
+
+```
+We see that all NAs are represented as NA classes.
+
+### The final Crime Data Frame: 
+
+```{r}
+df <- head(crime_00_16_raw, 17)
+df %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+
+
+# Data Transformation
+
+
+******
+
+**Summary Statistics of California Crimes and Clearances**
+
+These statistics are divided by the crime variables and the clearances variables.
+
+***Crimes***:
+
+```{r}
+# crime_00_16_raw %>% select(col1:col10) %>% summary()
+```
+
+
+
+
+
