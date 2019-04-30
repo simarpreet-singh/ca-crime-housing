@@ -12,16 +12,21 @@ output:
     highlight: zenburn
     
 ---
+<style>
+th, td {
+    padding-left: 3%;
+}
+</style>
 
-# Notes 
+**Repo** - [GitHub](https://github.com/simarpreet-singh/ca-crime-housing) 
 
-**Will be removed in the final paper**
+
+**Data**
 
 * **OpenJustice** - *Crimes and Clearances Data (Including Arson)*
   + [Download Data](https://openjustice.doj.ca.gov/downloads/Crimes_and_Clearances_with_Arson-1985-2017.csv)
-  + [Download Data Dictionary](https://openjustice.doj.ca.gov/downloads/Crimes-Clear-Arson%20Context.pdf)
-
-
+  + [View Data Dictionary](https://github.com/simarpreet-singh/ca-crime-housing/blob/master/CA-CRIME-CLEARANCES-DICT.pdf)
+  
 
 
 
@@ -61,6 +66,7 @@ This model of reporting statistical data implicitly means that there are certain
 library(tidyverse)
 library(knitr)
 library(kableExtra)
+library(stargazer)
 ```
 
 ```{r}
@@ -174,17 +180,157 @@ df %>%
 
 ******
 
-**Summary Statistics of California Crimes and Clearances**
+## Interesting Insights from Summary Statistices (Crime):
 
-These statistics are divided by the crime variables and the clearances variables.
+1. The minimum value for the following variables is negative:
 
-***Crimes***:
+* *ForRape_sum*: $-1$
+* *Robbery_sum*: $-1$
+* *AggAssault_sum*: $-4$
+
+  This is an interesting insight as logically there can't be a negative minimum for a numeric sum of events. Therefore, i'm interested in what these numbers are meant to represent, i.e. an enciding for a special case. I don't think that these are NAs as they aren't the same number.
+  
+2. For all crimes reported, the median is much smaller than the mean. This is interesting because this means that there are major outliers in the upper tails of the distributions of crimes. Meaning, in total, across counties and across the years, there are many outliers that push the avergae number of crimes *really* high.
+
+3. For certain crimes, in particular: *Violent_sum*, *Property_sum*, and *VegicleTheft_sum* the Standard Deviation is far greater than the mean. This indicates that these crimes are very wide spread, i.e. not all places have a total number of crimes similar to the avreage number. 
+This is interesting to note because it seems either certain counties or certain years push the average number of crimes to its high level but the total distribtuiion of crimes is widespread.
+
+4. As noted earlier, there are many variables with a minimumn of 0. This is especially true for all of the clearances variables. I am curious to understand if this is a standard way representing NAs in this dataset or if there were some places in crtain years that really had 0 clearances? This dataset's dictionary doesn't have any information on this.
+
+5. Given that there are many outliers in the upper tails of the distributions of crimes, there are still many unusually high maximum values for crimes. As an aexample, for Property crimes (*Property_sum*), the maximum is 94.23\% higher than the mean. This is an interesting outlier to explore: which counties or years cause such a spike in the crimes summary? 
 
 ```{r}
-# crime_00_16_raw %>% select(col1:col10) %>% summary()
+crimes_reported <- crime_00_16_raw %>% select(Year, County, NCICCode, Violent_sum:LTtotal_sum)
+clearances_reported <- crime_00_16_raw %>% select(Year, County, NCICCode, ViolentClr_sum:LTtotalClr_sum)
+arson_crime_clearences_reported <- crime_00_16_raw %>% select(Year, County, NCICCode, TotalStructural_sum:GrandTotClr_sum)
+```
+
+
+```{r results='asis'}
+stargazer(crimes_reported, type="html", align=TRUE, title="Summary Statistics of Crimes (2000 to 2016, CA)", median = TRUE)
+
+stargazer(clearances_reported, type="html", align=TRUE, title="Summary Statistics of Crime Clearances (2000 to 2016, CA)", median = TRUE)
+
+stargazer(arson_crime_clearences_reported, type="html", align=TRUE, title="Summary Statistics of Arson Crimes and Clearances (2000 to 2016, CA)", median = TRUE)
+```
+
+## Categorical Variables 
+
+Categorical variables in this dataset are not that itneresting as the number of times and number of counties represented are standard and are not affected by missing data etc. (i.e. a county is not left out because there was no data).  
+
+In total there are 58 Unique counties that are represented in this dataset. 
+
+```{r}
+unique(crime_00_16_raw$County)
+length(unique(crime_00_16_raw$County))
+```
+
+Los Angeles county appears 1,736 times. This is an interesting insight as I believe this may be because there are mulptiple reporting agencies reproting for LA County over multiple years.
+
+All of my Categorical Variables are related to each other.
+
+```{r}
+table(crime_00_16_raw$County)
+```
+
+
+## NAs
+
+This dataset has zero NAs for all columns. As noted before, this is interesting as 1) we aren't sure if the value 0 is used in-plac of NULL values and 2) if not, is there really no missing data colleceted by the DOJ and the zeros mean zero occurances. 
+
+
+```{r}
+colSums(sapply(crime_00_16_raw, is.na)) 
 ```
 
 
 
+## Looking Deeper into LA County
 
+Insights:
+
+1. The mean is far greater than the median for almost all crimes. Meaning there are more outliers in the lower tail of the distribution. This interesting because 1) it is the exact opposite in the entire dataset, and 2) this means that majority of the data (i.e. number of each crime) is not in the lower tail of the distribution, i.e. the crime is fairly *high* in LA County.
+
+2. Other than property crimes, which are high in LA and in the aggregate dataset, the highest crimes in LA county are violent crimes. This is itnresting to note as that mean the distribuiton of total crimes is *driven* by violent crimes specifically. Crimes in LA county are a lot more *dangerous* (i.e. murder) as compared to less *dangerous* crimes such as property crimes etc. 
+
+3. The distributuoin of property crimes are the most widespread. Meaning, its the crime that has th emost variation in amount of events -- not just a high number of crimes or a low number of crimes. 
+
+```{r }
+la_county <- crime_00_16_raw %>% filter(County == "Los Angeles County")
+```
+
+
+```{r results='asis'}
+stargazer(la_county, type="html", align=TRUE, title="Summary Statistics of LA County Crimes & Arson (2000 to 2016)", median = TRUE)
+```
+
+## Scale 
+
+Insights:
+
+1. The first hting I noticed was that sacramento coutny comes up for 9 out of the 16 years in this dataset for having violent crime higher than the average count of violent crime.
+
+2. A majority of all counties have violent criem above the avergae, though they might be in different years. (i.e. 41/58 coutnies)
+
+
+
+```{r}
+crime_00_16_raw %>% filter(Violent_sum > mean(Violent_sum)) 
+```
+
+```{r}
+crime_00_16_raw %>% filter(Violent_sum > mean(Violent_sum)) %>% distinct(County)
+```
+
+
+## Counts
+
+```{r}
+crime_00_16_raw %>% group_by(Year) %>% summarize(Count = n())
+```
+
+```{r}
+crime_00_16_raw %>% group_by(Year) %>% summarize(Sum = sum(Violent_sum))
+```
+## Mutating Variables
+
+```{r}
+not_cleared_violent <- crime_00_16_raw %>% mutate(Not_Cleared_Violent = Violent_sum - ViolentClr_sum) %>% select(Not_Cleared_Violent, County, Year)
+
+```
+
+```{r results='asis'}
+
+stargazer(not_cleared_violent, type = "html", align=TRUE, median=TRUE, title="Violent Crimes Not Cleared Summary") 
+```
+
+```{r}
+not_cleared_violent_all <- crime_00_16_raw %>% mutate(Not_Cleared_Violent = Violent_sum - ViolentClr_sum) %>% group_by(County, Year) %>% summarise(Count = sum(Not_Cleared_Violent))
+
+not_cleared_violent_all %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+
+## Other Insights
+
+The Year with Highest Violent Crime
+
+```{r}
+crime_00_16_raw %>% filter(Violent_sum == max(Violent_sum)) %>% select(Year)
+```
+
+Year of highest Property crimes.
+
+```{r}
+crime_00_16_raw %>% filter(Property_sum == max(Property_sum)) %>% select(Year)
+```
+
+County with highest Property Crime
+
+```{r}
+crime_00_16_raw %>% filter(Property_sum == max(Property_sum)) %>% select(County)
+```
 
