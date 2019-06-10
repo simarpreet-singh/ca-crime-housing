@@ -1,0 +1,61 @@
+---
+title: "Table of Contents: Housing Instability and Crime In California"
+subtitle: "References cited using APA format"
+author: Simarpreet Singh
+date: June 10, 2019
+output:
+  pdf_document:
+    number_sections: true
+---
+
+# Abstract
+
+# Data Context and Historical Background
+
+## Collection and Reporting
+
+## Institutional Context and History
+
+## Legal Context
+
+## Accessibility
+
+# Exploratory Data Analysis
+
+## Structure, Patterns, and Anomalies
+
+### Crimes Data
+
+#### Structure
+
+#### Missing Values 
+
+### Evictions Data
+
+#### Structure
+
+#### Missing Values 
+
+## Variation and Time
+
+### Violence over time
+
+# Key Findings 
+
+## What is the correlation between violent crime and eviction filings?
+
+## Is the distribution of eviction filings correlated with the distribution of crime?
+
+## How do violent crime counts covary with eviction filings?
+
+# Conclusion and Further Research
+
+## Data Issues
+
+### Issues with the hierarchy rule and underreporting crimes
+
+### Issues with formal evictions v.s. informal evictions
+
+## Conclusion and Moving Forward
+
+# Bibliography

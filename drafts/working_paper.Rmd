@@ -1,0 +1,1138 @@
+---
+title: "Working Paper"
+author: "Simarpreet Singh"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    code_folding: show
+    number_sections: true
+    collapsed: false
+    theme: flatly
+    highlight: zenburn
+    
+---
+<style>
+th, td {
+    padding-left: 3%;
+}
+#intro {
+  height: 60vh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+</style>
+
+**Repo** - [GitHub](https://github.com/simarpreet-singh/ca-crime-housing) 
+
+
+**Data**
+
+* **OpenJustice** - *Crimes and Clearances Data (Including Arson)*
+  + [Download Data](https://openjustice.doj.ca.gov/downloads/Crimes_and_Clearances_with_Arson-1985-2017.csv)
+  + [View Data Dictionary](https://github.com/simarpreet-singh/ca-crime-housing/blob/master/CA-CRIME-CLEARANCES-DICT.pdf)
+  
+**TW/CW**:
+
+This paper includes crime data and statistics on rape and assault. 
+
+
+# Abstract 
+
+******
+
+In this research project, I aim to investigate the contribution of housing instability to crime rates in California. The main social theoretical question that drives this research project is: What social and institutional conditions lead to high crime rates in a community? Specifically, I will examine what crimes impact which communities and regions across California and assess housing instability in those regions, using evictions as an indicator. The empirical research questions that guide this project are: From the years 2000 to 2016 what is the distribution of crimes by county, across California? Is the distribution of Evictions across California counties correlated with the distribution of crime? What are the trends in crime and evictions in California from 2000 to 2016, and do these trends correlate with each other? What are the demographics across counties of California? For counties where Evictions are highly correlated with crime rates, is there a correlation between demographic attributes and Evictions?
+
+To address these empirical research questions, I plan to explore crime and clearances data collected by the California Department of Justice’s Open Justice program. Specifically, I will be exploring the data from years 2000 to 2016, by county in California. In addition to the crimes and clearances data, I will be looking into evictions data collected by the Eviction Lab at Princeton University, for the years of 2000 to 2016, for California counties. And lastly, to understand the demographics I will use census data, that is included in the Eviction Lab’s data collection for each corny in each year of interest. I’ll be focusing on the distribution of crime types, the distribution of evictions, ad the distribution of race and economic demographics across counties of California. I’m focussing on this time period as it is the only time period with rich data about eviction, due to the Eviction Lab’s efforts.
+
+Consumer sentiment and real estate data indicates that housing instability (i.e. eviction) has been an important factor in decreasing access to livable housing conditions for certain, often marginalized, communities (I.e. gentrification). Eviction itself is an interesting indicator of housing instability as there is subjective measure involved in deciding whether a tenant continues to occupy a property or not (i.e. a landlord’s opinion of a tenant), as compared to other causes of housing instability such as rent increases. Historically, we also know that the most marginalized communities are often the ones that are impacted the most by crime. Putting these two ideas together, it is constructive to test the hypothesis that housing instability contributes to crime rates.
+
+This topic is important to study right now because with rising housing instability becoming a larger problem, especially in places like the San Francisco Bay Area where in San Francisco almost 85% of the total population was homeless in 2017, there is concern that instability in housing causes other detriments to people’s lives, such as crime. Some concerns include the volatility of changing schools for children due to housing instability, a lack of financial resources due to instability, leading to petty theft or other crimes, and more. Studying this topic will contribute to our understanding of how housing instability interacts with crime and what populations are most affected by it across California’s counties.
+
+
+# Data Context Background 
+
+***** 
+
+The crimes and clearances dataset that I’ll primarily be working with in this project is collected by the Department of Justice’s (DOJ) Criminal Justice Statistics Center (CJSC). Both the DOJ and the CJSC are a part of the office of the California Attorney General (Currently held by Xavier Becerra). Specifically, the CJSC is an office of the DOJ whose role as a Statistical Analysis Center (SAC) “is to collect and report statistical data that allow for valid assessments of crime and the criminal justice process in California.” The data that the CJSC is collecting in this dataset is reported by law enforcement agencies (LEA) across the state. At the top-level, this data collection and aggregation by the CJSC is a part of the  Federal Bureau of Investigation’s (FBI) Uniform Crime Reporting Program (UCR). The data flows from LEAs (where it is created) to the CJSC where it is aggregated and summarized, and then through the DOJ and California Attorney General’s office where it is published at the Open Justice web portal, and lastly the entire program is mandated by the FBI’s UCR program.
+
+Though the FBI’s UCR program is based around voluntary reporting by LEAs, the program is responsible for administrating and overseeing the cooperation of 18,000 city, university, county, state, tribal, and federal LEAs to report criminal data. Legally, the California DOJ has the authority to collect the crime and clearances data based on  Government Code Sections 13010-13012 and 13020-13023.
+
+The DOJ’s Open Justice web portal is a static web-page that provides access to several datasets that the CJSC and DOJ collect and publish. The web-page follows a fairly WYSIWYG paradigm where there are no walls in front of the data: each data set’s title, description and relevant files are listed on one page where the files are simple hyperlinks in the HTML that download when clicked. There is no API to call the data, however, the simplicity and openness of the Open Justice website make searching and retrieving the data straightforward and transparent. 
+ 
+The full dataset on crimes and clearances (including arson) has been collected from 1985 to 2017. The CJSC’s datasets are published online annually on the Open Justice web-portal. The data is collected by the CJSC as it is reported by the LEAs across the state. Meaning, the CJSC collects the raw data from the various LEAs and then aggregates it. This is important to note that the data reported is not the exact data collected. The data collected is the actual crime data whereas the data reported is statistical information - in this case, aggregate summaries -  about the raw data. This idea of reporting statistical data is emphasized by the California Attorney general’s office, specifically citing that the office’s duty is to “collect, analyze, and report statistical data, which provide valid measures of crime and the criminal justice process to government and the citizens of California.”
+
+This model of reporting statistical data implicitly means that there are certain methodologies and practices that are implemented not only at the point of collection but also in the manner the data is reported. An example of how this model of reporting the data effects how the numbers in the dataset get quantified is the hierarchy rule. The hierarchy rule is a method that is used to report multiple crimes that occured during a single event. The rule prioritizes only the most serious (based on hierarchy) crime and reports the crime alone. Therefore, if there were five crimes that could be charged at a single event, only the worst crime is reported and the others are not present in this aggregated dataset. Only arson is exempt from this rule as it often occurs alongside other crimes and therefore using this rule would significantly omit arson from the dataset. The DOJ does state that this rule should be taken into account in analyses that is done on the crimes and clearances dataset. However, this poses some vital issues that should be understood or at least questioned before performing analysis on the data. Firstly, what is the hierarchy that is used in this rule and where can information about that hierarchy and how it is constructed be found? Specifically, how are certain crimes ranked as worse than others? Secondly, how does this hierarchy affect the counting (or discounting) of certain crimes. For example, if murder is ranked as worse than sexual assault, only the murder would be counted. However, this would mechanically discount several cases where sexual assault on individual leads to their death, telling a very different story about crime. 
+
+## California Crimes and Clearances Data 
+
+
+*****
+
+```{r message=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stargazer)
+library(tibble)
+library(psych)
+```
+
+```{r}
+crime_85_17_raw <- read.csv('./data/crime/crime_clearances_85-17.csv', stringsAsFactors = FALSE)
+```
+
+
+
+### Cleaning the Crime Data
+
+*****
+
+```{r}
+# filter data to 2000 to 2016
+crime_00_16_raw <- crime_85_17_raw %>% filter(Year %in% c(2000:2016))
+
+# check the years in filtered data
+levels(as.factor(crime_00_16_raw$Year))
+```
+
+**Exploring the Data's Structure**
+
+*****
+
+```{r}
+# General Structure of the data set.
+glimpse(crime_00_16_raw)
+```
+
+
+**Looking at Null Representation**
+
+
+*****
+
+```{r}
+#View All Data
+#View(crime_00_16_raw)
+
+# ... I think there may be no NAs in this dataset (wow). Unless they are written as 0s.
+
+```
+
+**Checking for Nulls**
+
+
+*****
+
+The loop will print out which column number has NA values. Then we can insepct just those columns to see how NAs are represented. 
+
+```{r results='asis'}
+#get the columns that have NAs
+na_col <- c()
+for (i in 1:69) {
+  if (length(c(levels(as.factor(is.na(crime_00_16_raw[,i]))))) == 2) {
+    na_col <- c(na_col, i)
+  }
+}
+
+# get a boolean vector of which record is NA for the columsn found above.
+na_vals <- c()
+
+for (i in na_col) {
+  var_name <- paste("na_vals", as.character(eval(parse(text = "i"))), sep="_")
+  assign(var_name, c(na_vals, is.na(crime_00_16_raw[,i])))
+}
+
+row_bools <- list(na_vals_22, na_vals_23, na_vals_24, na_vals_25, na_vals_26)
+
+#display all records with NA data and the column that contains it.
+
+k = 1
+for (i in na_col) {
+  col_name <- as.name(colnames(crime_00_16_raw)[i])
+  # disp(col_name)
+  # print(crime_00_16_raw[row_bools[[k]],])
+  data <- crime_00_16_raw[row_bools[[k]],i]
+  # cat(paste(as.character(eval(parse(text = "col_name"))), "Data Class: ", as.character(class(crime_00_16_raw[row_bools[[k]],i])), sep="\n"))
+  cat(
+    paste(
+      as.character(eval(parse(text = "col_name"))),
+      "Data Class: ",
+      as.character(class(crime_00_16_raw[row_bools[[k]],i])),
+      sep="\n"
+    )
+  )
+  # print(data %>%
+  #   kable() %>%
+  #   kable_styling(bootstrap_options = "striped") %>%
+  #   scroll_box(width = "100%", height = "20%") %>%
+  #   footnote(general = as.character(eval(parse(text = "col_name"))))
+  # )
+  k = k + 1
+}
+
+```
+We see that all NAs are represented as NA classes.
+
+### The final Crime Data Frame: 
+
+```{r}
+df <- head(crime_00_16_raw, 17)
+df %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+
+
+# Data Transformation
+
+
+******
+
+## Interesting Insights from Summary Statistices (Crime):
+
+1. The minimum value for the following variables is negative:
+
+* *ForRape_sum*: $-1$
+* *Robbery_sum*: $-1$
+* *AggAssault_sum*: $-4$
+
+  This is an interesting insight as logically there can't be a negative minimum for a numeric sum of events. Therefore, i'm interested in what these numbers are meant to represent, i.e. an enciding for a special case. I don't think that these are NAs as they aren't the same number.
+  
+2. For all crimes reported, the median is much smaller than the mean. This is interesting because this means that there are major outliers in the upper tails of the distributions of crimes. Meaning, in total, across counties and across the years, there are many outliers that push the avergae number of crimes *really* high.
+
+3. For certain crimes, in particular: *Violent_sum*, *Property_sum*, and *VegicleTheft_sum* the Standard Deviation is far greater than the mean. This indicates that these crimes are very wide spread, i.e. not all places have a total number of crimes similar to the avreage number. 
+This is interesting to note because it seems either certain counties or certain years push the average number of crimes to its high level but the total distribtuiion of crimes is widespread.
+
+4. As noted earlier, there are many variables with a minimumn of 0. This is especially true for all of the clearances variables. I am curious to understand if this is a standard way representing NAs in this dataset or if there were some places in crtain years that really had 0 clearances? This dataset's dictionary doesn't have any information on this.
+
+5. Given that there are many outliers in the upper tails of the distributions of crimes, there are still many unusually high maximum values for crimes. As an aexample, for Property crimes (*Property_sum*), the maximum is 94.23\% higher than the mean. This is an interesting outlier to explore: which counties or years cause such a spike in the crimes summary? 
+
+```{r}
+crimes_reported <- crime_00_16_raw %>% select(Year, County, NCICCode, Violent_sum:LTtotal_sum)
+clearances_reported <- crime_00_16_raw %>% select(Year, County, NCICCode, ViolentClr_sum:LTtotalClr_sum)
+arson_crime_clearences_reported <- crime_00_16_raw %>% select(Year, County, NCICCode, TotalStructural_sum:GrandTotClr_sum)
+```
+
+
+```{r results='asis'}
+stargazer(crimes_reported, type="html", align=TRUE, title="Summary Statistics of Crimes (2000 to 2016, CA)", median = TRUE)
+
+stargazer(clearances_reported, type="html", align=TRUE, title="Summary Statistics of Crime Clearances (2000 to 2016, CA)", median = TRUE)
+
+stargazer(arson_crime_clearences_reported, type="html", align=TRUE, title="Summary Statistics of Arson Crimes and Clearances (2000 to 2016, CA)", median = TRUE)
+```
+
+## Categorical Variables 
+
+Categorical variables in this dataset are not that itneresting as the number of times and number of counties represented are standard and are not affected by missing data etc. (i.e. a county is not left out because there was no data).  
+
+In total there are 58 Unique counties that are represented in this dataset. 
+
+```{r}
+unique(crime_00_16_raw$County)
+length(unique(crime_00_16_raw$County))
+```
+
+Los Angeles county appears 1,736 times. This is an interesting insight as I believe this may be because there are mulptiple reporting agencies reproting for LA County over multiple years.
+
+All of my Categorical Variables are related to each other.
+
+```{r}
+table(crime_00_16_raw$County)
+```
+
+
+## NAs
+
+This dataset has zero NAs for all columns. As noted before, this is interesting as 1) we aren't sure if the value 0 is used in-plac of NULL values and 2) if not, is there really no missing data colleceted by the DOJ and the zeros mean zero occurances. 
+
+
+```{r}
+colSums(sapply(crime_00_16_raw, is.na)) 
+```
+
+
+
+## Looking Deeper into LA County
+
+Insights:
+
+1. The mean is far greater than the median for almost all crimes. Meaning there are more outliers in the lower tail of the distribution. This interesting because 1) it is the exact opposite in the entire dataset, and 2) this means that majority of the data (i.e. number of each crime) is not in the lower tail of the distribution, i.e. the crime is fairly *high* in LA County.
+
+2. Other than property crimes, which are high in LA and in the aggregate dataset, the highest crimes in LA county are violent crimes. This is itnresting to note as that mean the distribuiton of total crimes is *driven* by violent crimes specifically. Crimes in LA county are a lot more *dangerous* (i.e. murder) as compared to less *dangerous* crimes such as property crimes etc. 
+
+3. The distributuoin of property crimes are the most widespread. Meaning, its the crime that has th emost variation in amount of events -- not just a high number of crimes or a low number of crimes. 
+
+```{r }
+la_county <- crime_00_16_raw %>% filter(County == "Los Angeles County") %>% select(Year, County, Violent_sum:LTtotal_sum)
+```
+
+
+```{r results='asis'}
+stargazer(la_county, type="html", align=TRUE, title="Summary Statistics of LA County Crimes & Arson (2000 to 2016)", median = TRUE)
+```
+
+## Scale 
+
+Insights:
+
+1. The first thing I noticed was that sacramento county comes up for 9 out of the 16 years in this dataset for having violent crime higher than the average count of violent crime.
+
+2. A majority of all counties have violent crime above the average, though they might be in different years. (i.e. 41 of 58 coutnies)
+
+
+
+```{r}
+violence_above_avg <- crime_00_16_raw %>% filter(Violent_sum > mean(Violent_sum)) %>% select(Year, County, NCICCode, Violent_sum:LTtotal_sum)
+violence_above_avg %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+```{r}
+crime_00_16_raw %>% filter(Violent_sum > mean(Violent_sum)) %>% distinct(County) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width="30%", height = "40vh")
+```
+
+
+## Counts
+
+```{r}
+crime_00_16_raw %>% group_by(Year) %>% summarize(Count = n())
+```
+
+```{r}
+crime_00_16_raw %>% group_by(Year) %>% summarize(Sum = sum(Violent_sum))
+```
+## Mutating Variables
+
+```{r}
+not_cleared_violent <- crime_00_16_raw %>% mutate(Not_Cleared_Violent = Violent_sum - ViolentClr_sum) %>% select(Not_Cleared_Violent, County, Year)
+
+```
+
+```{r results='asis'}
+
+stargazer(not_cleared_violent, type = "html", align=TRUE, median=TRUE, title="Violent Crimes Not Cleared Summary") 
+```
+
+```{r}
+not_cleared_violent_all <- crime_00_16_raw %>% mutate(Not_Cleared_Violent = Violent_sum - ViolentClr_sum) %>% group_by(County, Year) %>% summarise(Count = sum(Not_Cleared_Violent))
+
+not_cleared_violent_all %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+
+## Other Insights
+
+The Year with Highest Violent Crime
+
+```{r}
+crime_00_16_raw %>% filter(Violent_sum == max(Violent_sum)) %>% select(Year)
+```
+
+Year of highest Property crimes.
+
+```{r}
+crime_00_16_raw %>% filter(Property_sum == max(Property_sum)) %>% select(Year)
+```
+
+County with highest Property Crime
+
+```{r}
+crime_00_16_raw %>% filter(Property_sum == max(Property_sum)) %>% select(County)
+```
+
+
+# Data Exploration
+
+## Structure, Patterns, and Anomalies
+
+### Structure
+
+The California Crimes and Clearances Dataset describes crimes across counties in California from the years 1985 to 2017. I'll be using the data only from 2000 to 2016. This is a Panel dataset that is indexed by county and time (year). Crimes are described by a total sum of the number of each type of crime in a given county in a given year. In addition to crimes, there is also data on clearances of crimes and arson (which is represented uniquely from other crimes). 
+
+The rows in this dataset represent a reporting agencie's report for a county in a year from 2000 to 2016 (soe for each county in a given year, there are n number of records if there are n number of reporting agencies). The columns represent the total count for the type of crime, the total count for the clearnaces for a type of crime, and the arson sums. 
+
+Some relevant variables I'll be closely analyzing are:
+
+* ***Violent_sum***: Total count of violent crimes in a given county in a given year.
+  + The sum of homicide, rape, robbery, and aggravated assault.
+* ***Homicide_sum***: Total count of homicides in a given county in a given year.
+* ***ForRape_sum***: Total count of rapes in a given county in a given year.
+  + Prior to 2014, this variable only includes data on what was considered *Forcible Rape*.
+* ***Robbery_sum***: Total count of robberies in a given county in a given year.
+* ***AggAssault_sum***: Total count of Aggravated Assaults in a given county in a given year.
+  + Def. *A criminal assault — a threat or physical act that creates a reasonable apprehension of imminent harmful or offensive contact with one's person — involving an additional, aggravating factor, such as the intent to inflict serious bodily injury or the use of a dangerous weapon.* [More, here.](https://www.law.cornell.edu/wex/aggravated_assault)
+* ***Property_sum***: Total count of property crimes in a given county in a given year.
+  + The sum of burglary, motor vehicle theft, and larcency-theft.
+* ***Burglarly_sum***: Total count of burglaries in a given county in a given year.
+* ***VehicleTheft_sum***: Total count of motor vehicle thefts in a given county in a given year.
+* ***LTotal_sum***: Total count of larceny thefts in a given county in a given year.
+  + Def. [*A crime at common law.  The illegal taking of the property of another with intent to deprive the owner thereof.*](https://www.law.cornell.edu/wex/larceny)
+
+Below is a summary of the dataset.
+
+```{r warning=FALSE}
+crime_desc <- describe(crime_00_16_raw)
+```
+ 
+ 
+```{r}
+crime_desc %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+
+### Missing Values
+
+There are apparently no missing values in this dataset. Moreover, the many variables that contain the value zero or a negative number for the count are not described in the data dictionary. To understand this issue, I'll be looking into the UCR's data collection methods and if that does not explain it, perhaps contacting the OpenJustice team or the UCR folks. 
+
+
+### Interesting Insight
+
+An appalling insight that I found is that in Los Angeles County, the total violent crime count was higher in each year (for all years) than the state-wide average for all counties from 2000 to 2016. This means that in each year in this data set, LA County has a violent crime count larger than the total average violent crime count (across all counties in CA and the 16 years). 
+
+To discover this, I grouped the crime data by County and Year, and then I filtered this data to just Los Angeles County. For this new dataframe representing just LA County from 2000 to 2016, I added the violent crime counts in each year (only for LA County) in a column called Violent_Crime_Count, and selected just the Year, County and, Violent_Crime_Count columns. Now the dataframe represents the *true* total violent crimes in each year for LA County (i.e. from all reporting agencies in the county). Lastly, I filtered this data to the years where violent crime was higher than the state-wide average violent crime count from 2000 to 2016.
+
+This insight directly relates to my question about the distribution of crime across counties (and time). This is a glimpse into 1 data point (i.e. a County) that contributes to this distribution. Going forward, I want to compare violent crime counts for each county in each year across all counties and see which counties have *unusually* high violent crime counts. 
+
+***A note about the collection of this violent crime data***
+
+Due to the hierarchy rule, the true population (population defined as California counties) counts for the various violent crimes are **likely** higher; $\hat{Violent\_sum} < Violent\_sum$. This is because in many events, multiple violent crimes were committed but only the "worst" was recorded. Therefore the true count in the population, which is unkown, is higher.
+
+```{r }
+violent_sum_avg <- mean(crime_00_16_raw$Violent_sum)
+
+la_county_sum_most_violent <- crime_00_16_raw %>%  group_by(County, Year) %>% filter(County == "Los Angeles County") %>% summarise(Violent_Crime_Count = sum(Violent_sum)) %>% select(Year, County, Violent_Crime_Count) %>% filter(Violent_Crime_Count > violent_sum_avg)
+
+
+la_county_sum_most_violent %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+
+```
+
+### Interesting Insight - 2
+
+Zooming out and looking at 1) the counties with the *most* violent crimes (in general), we see that Los Angeles is the most violent in each year. On the other end, for counties that are *least* violent, there is a higher variance in the counties meaning a more diverse set of counties have low violent crimes. 
+
+This is a significant idea becuase it addresses the make-up of the distribtuion of violent crime: in the upper-tail, for high crime, we see a consistent county contributing to alarming rates of crimes, on the lower-tail of the distribtion we see a larger number of counties contributing to low violence. 
+
+This means that on the high end, there is *just* one county that over-and-over has very high crime. However, on the low-end we see that there are many counties that have low crime (Good!). 
+
+I classified a county having high violent crime if they had a violent crime count that is larger than the 3rd quartileall counties across the 16 year period (i.e. their violent crime counts are greater than 75% of all violent crime counts -- 207). For a county having low violent crime, I based iton having a violent crime count lower than the 1st quartile (i.e. less than 25% of all violent crimes -- 14).
+
+To get this insight I grouped the data by county, then filtered the rows where Violent_sum is either greater than 207 (for high crime) and less than 14 (for low crime), then grouped by year, and found the highest Violent_sum count (for high crime) and the lowest Violent_sum count (for low crime).
+
+```{r}
+violent_sum_max <- max(crime_00_16_raw$Violent_sum)
+violent_sum_min <- min(crime_00_16_raw$Violent_sum)
+
+quantile(sort(crime_00_16_raw$Violent_sum[crime_00_16_raw$Violent_sum !=0]))
+
+
+max_violent_counties <- crime_00_16_raw %>% 
+  group_by(County) %>% 
+  filter(Violent_sum >= 207) %>% 
+  arrange(Violent_sum) %>%
+  select(Year, County, Violent_sum) %>%
+  group_by(Year) %>% 
+  filter(Violent_sum == max(Violent_sum)) %>%
+  arrange(Year, Violent_sum)
+
+
+min_violent_counties <- crime_00_16_raw %>% 
+  filter(Violent_sum != 0) %>%
+  group_by(County) %>% 
+  filter(Violent_sum <= 14) %>%
+  select(Year, County, Violent_sum)
+
+min_violent_counties_u <- min_violent_counties %>%
+  group_by(Year) %>%
+  # summarise(Violent_crimes = sum(Violent_sum)) %>%
+  filter(Violent_sum == min(Violent_sum))
+
+max_violent_counties %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+
+min_violent_counties_u %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+
+## Variation and Covariation 
+
+### 1. Los Angeles County had the most violent crime each year from 2000 to 2016.
+
+```{r}
+
+#MOST CRIME
+#__________
+most_vcrime <- crime_00_16_raw %>% 
+  group_by(Year) %>%
+  filter(Violent_sum == max(Violent_sum)) %>%
+  select(Year, County, NCICCode, Violent_sum, Homicide_sum, ForRape_sum, Robbery_sum, AggAssault_sum)
+
+
+no_z_data <- crime_00_16_raw %>% filter(Violent_sum != 0)
+
+ggplot(most_vcrime, aes(x=Year, y=Violent_sum)) +
+  geom_point(col="tomato2", size=3) +
+  geom_segment(aes(x=Year,
+                   xend=Year,
+                   y=min(Year),
+                   yend=max(Violent_sum)),
+               size=0.1) +   # Draw dashed lines
+  labs(title="Violent Crime in LA County",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+  ggsave("violent_crime_la.png")
+
+
+ggplot(crime_00_16_raw, aes(x=Year, y=Violent_sum, color=County)) +
+  geom_point(size=3, alpha=.5) +
+  geom_segment(aes(x=Year,
+                   xend=Year,
+                   y=min(Year),
+                   yend=max(Violent_sum)),
+               size=0.1) +   # Draw dashed lines
+  labs(title="Violent Crime, all Counties in CA",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", 
+       x="Year", 
+       y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom") +
+  guides(color=FALSE) +
+  geom_line(data=most_vcrime, aes(fill=County, color="black"), show.legend = TRUE) +
+  ggsave("violent_crime_all.png")
+  
+```
+
+
+### Least Violent Counties 
+
+
+```{r}
+#LEAST CRIME 
+#___________
+least_vcrime_all <- no_z_data %>% 
+  group_by(Year) %>%
+  filter(Violent_sum <= min(Violent_sum)) %>%
+  select(Year, County, NCICCode, Violent_sum, Homicide_sum, ForRape_sum, Robbery_sum, AggAssault_sum)
+
+least_vcrime <- least_vcrime_all %>%
+  group_by(Year, County) %>%
+  mutate(total_violence = sum(Violent_sum)) %>%
+  arrange(Year, County) %>%
+  group_by(County, Year) %>%
+  filter(total_violence == min(total_violence))
+
+
+least_vcrime
+```
+
+
+
+# Memo 6
+
+
+## Summarised Data 
+
+Each row represents a county and the summarised crimes from 2000 to 2016 in that county. 
+
+```{r}
+sum_crimes <- crime_00_16_raw %>% group_by(County) %>% summarise(violence = sum(Violent_sum), homicide = sum(Homicide_sum), rape = sum(ForRape_sum), robbery = sum(Robbery_sum), aggassault = sum(AggAssault_sum), property = sum(Property_sum), burglary = sum(Burglary_sum), vehicle = sum(VehicleTheft_sum), larceny = sum(LTtotal_sum), rapeclr = sum(ForRapeClr_sum), homicideclr = sum(HomicideClr_sum)) %>% mutate(truerape = rape-rapeclr) %>% filter(homicide < 10000)
+
+sum_crimes %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+```
+
+## Variation
+
+### Homicide Frequency in California: 2000 - 2016 
+
+1. Just 1 homicide was the most frequent number of homicdes in the sixteen year period.
+
+2. As the number of homicdes go up, the frequency count goes down. Meaning, high homicide counts are less frequent.
+
+3. There is an outlier past 13,000 homicides: the frequency falls to 0 at 3,000 homicides but there is one outlier in the upper end of the distribution.
+
+```{r message=FALSE}
+ggplot(sum_crimes, aes(homicide)) +
+  geom_freqpoly(binwidth=600) +
+  scale_x_continuous(breaks = round(seq(min(sum_crimes$homicide), max(sum_crimes$homicide), by = 1000),1)) +
+  scale_y_continuous(breaks = round(seq(0, 40, by = 5),1)) +
+  labs(title="Homicide Frequency in California",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", 
+       x="Homicides", 
+       y="Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom") +
+  guides(color=FALSE) +
+  ggsave("homicide_frequency.png")
+  
+  
+```
+
+### Rape Frequency in California: 2000 - 2016 
+
+1. The most frequent number of rape cases was 5, across the 16 year period. However, there are much larger frequenices in the right tail of the distribution - meaning where sexual violence is unproportianlly a problem in certain counties versus others. 
+
+2. There is a spike in rape case frequency around 8,000 cases. This would be an interesting county to look deeper into as it is the second largest frequency count in this frequency distribution. 
+
+3. Again there is an outlier in the right tail of the distribution. This might be contributed by the same county as the homicde frequency.
+
+```{r message=FALSE}
+ggplot(sum_crimes, aes(rape)) +
+  geom_freqpoly(binwidth=2000) +
+  scale_x_continuous(breaks = round(seq(min(sum_crimes$rape), max(sum_crimes$rape), by = 4000),1)) +
+  scale_y_continuous(breaks = round(seq(0, 30, by = 5),1)) +
+  labs(title="Rape Frequency in California",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", 
+       x="Rapes", 
+       y="Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom") +
+  guides(color=FALSE) +
+  ggsave("rape_frequency.png")
+  
+  
+```
+
+## Covariation
+
+### Homicide and Rape 
+
+
+1. There is a positive but *weak* (aggregate) correlation between homicide and rape.
+
+2. The correlation is strongest in the bottom-left of the plot: where most of the counties data lies for homicides and rape, the two crimes have a strong positive correlation.
+
+3. Rapes are more prevelant than homicides in each county. 
+
+
+**Plot**
+
+```{r message=FALSE}
+hom_rape_nleg <- ggplot(sum_crimes, aes(homicide, rape, color=County, size=5, alpha=.2)) +
+  geom_point() +
+  scale_x_continuous(breaks = round(seq(min(sum_crimes$homicide), 3000, by = 200),1)) +
+  scale_y_continuous(breaks = round(seq(min(sum_crimes$rape), max(sum_crimes$rape), by = 4000),1)) +
+  labs(title="Rape and Homicide in California",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", 
+       x="Homicide", 
+       y="Rape") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none") +
+  guides(color=FALSE)
+
+hom_rape_nleg
+```
+
+**Legend**
+
+```{r message=FALSE}
+library(gridExtra)
+library(grid)
+library(cowplot)
+
+hom_rape_wleg <- ggplot(sum_crimes, aes(homicide, rape, color=County), alpha=.3, size=5) +
+  theme(legend.text=element_text(size=10)) + 
+  geom_point() 
+
+legend <- get_legend(hom_rape_wleg) 
+
+grid.newpage()
+grid.draw(legend)
+
+```
+
+### Homicide and Burglary 
+
+
+1. Similarly, there is a positve but weak correlation between homicide and burglary.
+
+2. There is  avery strong correlation between burglary and homicide in the bottom-left of the plot, however it is important to note that the proportion is very small. For ever X number of burglaries there are < X homicides (i.e. ~40,000:~200) 
+
+3. In terms of outliers, the data trends more towards burglaries than homicides. 
+
+**Plot**
+
+```{r}
+hom_burg_nleg <- ggplot(sum_crimes, aes(homicide, burglary, color=County, size=5, alpha=.2)) +
+  geom_point() +
+  scale_x_continuous(breaks = round(seq(min(sum_crimes$homicide), 3000, by = 200),1)) +
+  scale_y_continuous(breaks = round(seq(min(sum_crimes$burglary), 300000, by = 40000),1)) +
+  labs(title="Burglary and Homicide in California",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", 
+       x="Homicide", 
+       y="Burglary") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none") +
+  guides(color=FALSE)
+
+hom_burg_nleg
+```
+
+**Legend**
+
+```{r message=FALSE}
+library(gridExtra)
+library(grid)
+library(cowplot)
+
+hom_burg_wleg <- ggplot(sum_crimes, aes(homicide, burglary, color=County), alpha=.3, size=5) +
+  theme(legend.text=element_text(size=10)) + 
+  geom_point() 
+
+legend2 <- get_legend(hom_burg_wleg) 
+
+grid.newpage()
+grid.draw(legend2)
+
+```
+
+
+### Aggravated Assault and Burglary 
+
+
+1. The correlation between Aggravated Assault and Burglary becomes weaker as the number cases get larger.
+
+2. The variation is fairly contant, though it varies a more in the right tail of the distributions (not inlcuding the outlier). This makes sense as many burglary cases, as it involves intentionally trespassing property such as homes, would involve person-to-person confrontation. 
+
+3. More burglary cases occur than aggravated assault cases.
+
+**Plot**
+
+```{r}
+aa_burg_nleg <- ggplot(sum_crimes, aes(aggassault, burglary, color=County, size=5, alpha=.2)) +
+  geom_point() +
+  scale_x_continuous(breaks = round(seq(min(sum_crimes$homicide), 200000, by = 15000),1)) +
+  scale_y_continuous(breaks = round(seq(min(sum_crimes$burglary), 300000, by = 40000),1)) +
+  labs(title="Burglary and Aggravated Assault in California",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", 
+       x="Aggravated Assault", 
+       y="Burglary") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none") +
+  guides(color=FALSE)
+
+aa_burg_nleg
+```
+
+**Legend**
+
+```{r message=FALSE}
+library(gridExtra)
+library(grid)
+library(cowplot)
+
+aa_burg_wleg <- ggplot(sum_crimes, aes(aggassault, burglary, color=County), alpha=.3, size=5) +
+  theme(legend.text=element_text(size=10)) + 
+  geom_point() 
+
+legend3 <- get_legend(aa_burg_wleg) 
+
+grid.newpage()
+grid.draw(legend3)
+
+```
+
+
+### Rape Cases and Uncleared Rape Cases
+
+
+1. Uncleared Rape Cases is the difference between Rape and Rape Clearances. There is a strong correlation between rape cases that were *opened* and rape cases that were uncleared (as we expect sinc uncleared rape cases is a linear funcion of rape cases)
+
+2. A majority of the counties have rape cases that were opened and were not cleared (i.e. they weren't dropped). 
+
+3. The data is clustered into groups. Majority of the rape cases that were opened had ~44% uncleared cases.  The next chunk, where there was an even higher number of cases had ~66% cases uncleared. 
+
+**Plot**
+
+```{r}
+rape_rapec_nleg <- ggplot(sum_crimes, aes(rape, truerape, color=County, size=5, alpha=.2)) +
+  geom_point() +
+  scale_x_continuous(breaks = round(seq(min(sum_crimes$rape), max(sum_crimes$rape), by = 1500),1)) +
+  labs(title="Rape Cases and Uncleared Rape Cases in California",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", 
+       x="Rape Cases", 
+       y="Uncleared Rape Cases") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none") +
+  guides(color=FALSE)
+
+rape_rapec_nleg
+```
+
+**Legend**
+
+```{r message=FALSE}
+library(gridExtra)
+library(grid)
+library(cowplot)
+
+rape_rapec_wleg <- ggplot(sum_crimes, aes(rape, rapeclr, color=County), alpha=.3, size=5) +
+  theme(legend.text=element_text(size=10)) + 
+  geom_point() 
+
+legend4 <- get_legend(rape_rapec_wleg) 
+
+grid.newpage()
+grid.draw(legend4)
+
+```
+
+## California Evictions Data (Memo 7)
+
+```{r}
+#pull in evictions data
+evictions_raw <- read.csv("./data/evictions/counties-eviction-lab.csv")
+```
+
+### Wrangling Evictions Data
+
+```{r}
+head(evictions_raw)
+```
+
+**Time Span of the Evictions Data**:
+
+```{r}
+levels(as.factor(evictions_raw$year))
+```
+The time span is the same as the California Crimes and LCearances Dataset. 
+
+
+**Geographic Area**
+
+This dataset is for California Counties only. 
+
+Checking if all counties are represented and common amongst the two datasets:
+
+If a county is not common it will print "FALSE" and the index of the false value.
+
+```{r}
+county_names_ev <- unique(as.factor(evictions_raw$name))
+county_names_cr <- unique(as.factor(crime_00_16_raw$County))
+
+i = 1
+
+for (name in county_names_ev) {
+  if (name %in% county_names_cr) {
+    print(i)
+    print("TRUE")
+    i=i+1
+  } else {
+    print("FALSE")
+  }
+}
+
+length(county_names_ev) == length(county_names_cr)
+```
+
+They all match! Cool.
+
+
+**Creating Unique Id's for each county in a given year, Evicitions Data**
+
+```{r}
+evictions_name <- evictions_raw %>% mutate(name_no_space = gsub(" ","_",name))
+evictions <- evictions_name %>% mutate(uid = tolower(paste(as.character(name_no_space), as.character(year), sep="_")))
+```
+
+
+```{r}
+head(evictions$uid, 6)
+```
+
+
+**Creating IDs for a merge column in the Crimes Data**
+
+```{r}
+crime_name <- crime_00_16_raw %>% mutate(name_no_space = gsub(" ","_",County))
+crime <- crime_name %>% mutate(uid = tolower(paste(as.character(name_no_space), as.character(Year), sep="_")))
+```
+
+```{r}
+head(crime$uid, 6)
+```
+
+**Joining the two datasets**
+
+```{r}
+crime_evictions_raw <- left_join(crime,evictions, by="uid")
+
+head(crime_evictions_raw)
+```
+
+**Cleaning up the Joined Dataset**
+
+The variables I kept are: 
+
+* the total sum of All Violent Crimes 
+  + Aggregate
+  + Homicide
+  + Forcible Rape
+  + Robbery
+  + Aggravated Assault
+  
+* total sum of Property Crimesa nd Burglary
+
+* Actual counts of Forcible rape, Attempted Rape, Assault with firearm, Assault with knife or cutting
+
+* And lastly, all of the evictions data including the census information.
+
+```{r}
+crime_evictions <- crime_evictions_raw %>% select(-c(year, name, name_no_space.y, name_no_space.x, VehicleTheft_sum)) %>% select(Year:LTtotal_sum, RAPact_sum:ARAPact_sum, FASSact_sum, uid:subbed) %>% select(-c(LTtotal_sum))
+
+crime_evictions %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "500px")
+
+colnames(crime_evictions) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "200px")
+```
+
+
+
+
+
+**Save the Raw, Joined Dataset**
+
+```{r}
+#write.csv(crime_evictions, file = "ca_evictions_crimes_00_16_counties.csv")
+```
+
+# Additional Data and Insights
+
+
+The data set I elected to join with the primary california crimes dataset is county-level evicitions data from the Eviction Lab. The Eviction Lab is an initiative at Princeton University where they built the country's first nation-wide database of evictions. This particular dataset is at the county level and provides information on number of evictions, evicition filing rate, information on housing such as percent renter dwellings and demographic information for each county. This dataset covers the time range of 2000-2016. 
+
+
+This dataset does not have a unique, common column with the crimes dataset. This is mainly becasue, in the crimes dataset, while it represents a County in a year between 2000-2016, each unique county-year combination appears multiple times (for each reporting agency). Therefore I could not just use a column that already exists to merge the data set. To create a unique id, I needed to create an id the represented a unique county in a unique year. This way, in the crimes dataset the unique id would repeat for each reporting agency that reported for that county in that year (i.e. there would be five occurances of the unique id that represents LA in 2000 if there were 5 Reporting agencies that reported data for LA in the year 2000). To accomplish this I created a unique id variable called *uid* in each dataset that combines the county name in lowercase and the year it appears, seperated by underscores (not spaces). This resulted in a unique id that is structured as *county_name_year* such as los_angeles_county_2000. 
+
+This dataset only covers 2000 to 2016, so it was redy to go in terms of both time and geography.
+
+
+**1 Bringing Evictions into the Picture: LA County**
+
+I found that LA County has a very high correlation between evictions and violent crime. There is almost an $80\%$ correlation between evictions and crime in LA County. To get this result I filtered the *crime_evictions* data to the most violent counties (LA) and then calculated the correlation between the two variables using the $cor(x,y)$ function.
+This gives us deeper insight into the relationship between violence and other factors such as housing instability and helps paint a better picture of how the two might be related. 
+
+```{r}
+most_vcrime_ce <- crime_evictions %>% 
+  group_by(Year) %>%
+  filter(Violent_sum == max(Violent_sum)) %>%
+  select(Year, County, NCICCode, Violent_sum, Homicide_sum, ForRape_sum, Robbery_sum, AggAssault_sum, evictions)
+
+#Corr evictions and violent crime in LA county
+print("Correlation of evictions and violent crime in LA county:")
+cat((cor(most_vcrime_ce$Violent_sum, most_vcrime_ce$evictions, use = "complete.obs")*100),"%", "\n")
+
+```
+
+
+```{r warning=FALSE, message=FALSE}
+most_vcrime_ce <- crime_evictions %>% 
+  group_by(Year) %>%
+  filter(Violent_sum == max(Violent_sum)) %>%
+  select(Year, County, NCICCode, Violent_sum, Homicide_sum, ForRape_sum, Robbery_sum, AggAssault_sum, evictions)
+
+ggplot(most_vcrime_ce) +
+  geom_line(size=1, aes(x=Year, y=Violent_sum, color="Violent Crime Sum")) +
+  geom_segment(aes(x=Year,
+                   xend=Year,
+                   y=min(Year),
+                   yend=max(Violent_sum)),
+               size=0.1) + 
+  geom_line(size=1, aes(x=Year, y=evictions, color="Evictions"), show.legend = TRUE) +
+  geom_segment(aes(x=Year,
+                   xend=Year,
+                   y=min(Year),
+                   yend=max(evictions)),
+               size=0.1) + 
+  labs(title="Violent Crime and Evictions in LA County",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", x="Year", y="Violent Crime / Evictions Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) + 
+  ggsave("violent_crime_evictions_la.png")
+  
+```
+
+
+**2 Comparing it to the rest of CA**
+
+As compared to all other counties I found that LA has a 64% higher correlation between evictions and violent crimes. In particular, the other counties in aggregate had a 15% correlation between the two variables. To find this insight I filtered the *crime_evicitons* dataset to all counties but LA and ran the same correlation command on the two variables. Then I took the differnce between the LA and not LA correlations. 
+
+```{r}
+
+#All Counties but LA
+not_la <- crime_evictions %>% filter(County != "Los Angeles County")
+
+#Corr evictions and violent crime in every county but LA
+print("Correlation of evictions and violent crime in every county but LA")
+cat((cor(as.numeric(not_la$Violent_sum), as.numeric(not_la$evictions), use = "complete.obs")*100),"%", "\n")
+
+print("LA County has a correlation between eviction and violent crime this much higher than all opther counties:")
+cat(((cor(most_vcrime_ce$Violent_sum, most_vcrime_ce$evictions, use = "complete.obs") - cor(as.numeric(not_la$Violent_sum), as.numeric(not_la$evictions), use = "complete.obs"))*100), "%", "\n")
+```
+
+
+```{r warning=FALSE, message=FALSE}
+ggplot(crime_evictions) +
+  geom_point(size=3, alpha=.5,aes(x=Year, y=Violent_sum, col="Violent Crime Sum"), show.legend = TRUE) +
+  geom_point(size=3, alpha=.5,aes(x=Year, y=evictions, col="Evictions"), show.legend = TRUE) +
+  geom_line(data=most_vcrime_ce, size=1, aes(x=Year, y=Violent_sum, color="Violent Crime Sum"), show.legend = TRUE) +
+  geom_segment(aes(x=Year,
+                   xend=Year,
+                   y=min(Year),
+                   yend=max(Violent_sum)),
+               size=0.1) +   # Draw dashed lines
+  geom_line(data=most_vcrime_ce, size=1, aes(x=Year, y=evictions, color="Evictions"), show.legend = TRUE) +
+  geom_segment(aes(x=Year,
+                   xend=Year,
+                   y=min(Year),
+                   yend=max(evictions)),
+               size=0.1) + 
+  labs(title="Violent Crime and Evictions, all Counties in CA",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice",
+       x="Year",
+       y="Violent Crime / Evictions Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom") +
+  ggsave("violent_crime_evictions_all.png")
+```
+
+## Memo 8
+
+### NAs vs. Zeros
+
+Two Very different pictures can be painted about what data is missing vs. what counties had no violent crime depending on the way the 0s are interpreted. 
+
+If Zeros are assumed to be Zeros, then we can tell a story about how many times a county had zero violent crime over the 16 years (reported by each reporting agency). 
+
+Where as if we interpret Zeros as NAs, we can tell a story about how many counties have *missing* data for Violent Crimes. 
+
+####Assume Zeros mean no Violent Crime
+
+**Plot**
+
+Includes 1 count for each Reporting Agency that reported Zero Violent Crimes for that County in each Year. On Average, the count for zero violent criem reported per county is 30. This chart shows the counts only for counties who had 30 or more Zero non violent crime reports.
+```{r}
+
+crime_min <- crime_evictions %>% group_by(County) %>% filter(Violent_sum == 0) %>% summarise(Count = n()) %>% filter(Count >= 30)
+length(crime_min$County)
+
+crime_min$County <- gsub("County", "", crime_min$County)
+
+
+
+ggplot(crime_min) +
+  geom_col(aes(x=County, y=Count, fill=County), show.legend = TRUE) +
+  # geom_point(size=3, alpha=.5,aes(x=Year, y=evictions, col="Evictions"), show.legend = TRUE) +
+  labs(title="The Number of times a County had Zero Violent Crime (Greater than 30)",
+       subtitle="From 2000 to 2016",
+       caption="Data Source: Open Justice",
+       x="County",
+       y="Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggsave("zero_crime_all.png")
+```
+
+
+
+
+####Assume 0s are NAs
+
+
+**Plot**
+
+
+```{r}
+
+crime_na <- crime_evictions %>% mutate(Violent_sum_NA = ifelse(Violent_sum == 0, NA, Violent_sum)) %>% group_by(County) %>% filter(is.na(Violent_sum_NA)) %>% summarise(Count = n()) %>% filter(Count >= 30)
+
+crime_na$County <- gsub("County", "", crime_na$County)
+
+
+
+ggplot(crime_na) +
+  geom_col(aes(x=County, y=Count, fill=County), show.legend = TRUE) +
+  # geom_point(size=3, alpha=.5,aes(x=Year, y=evictions, col="Evictions"), show.legend = TRUE) +
+  labs(title="Number of missing Violent Crime Counts by County (Greater than 30)",
+       subtitle="From 2000 to 2016",
+       caption="Data Source: Open Justice",
+       x="County",
+       y="Missing Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none", axis.text.x = element_text(angle = 45, hjust = 1)) +
+  ggsave("na_crime_all.png")
+```
+
+
+
+####The Distribution of Violent Crimes**
+
+It is interesting to think about what the *true* distribtution of violent crime would be: Is this the true distribution if there truly is no violent crime in certain counties (i.e. Zeros are really Zeros)? Or if the distribtuion very different from what this data set tells us as we have so many missing Violent Crime Counts (i.e. Zeros are NAs)? 
+
+```{r}
+
+crime_a_r_0 <- crime_evictions %>% filter(startsWith(County, "A") | startsWith(County, "B") | startsWith(County, "C") | startsWith(County, "D") | startsWith(County, "E") | startsWith(County, "F") | startsWith(County, "G") | startsWith(County, "H") | startsWith(County, "I") | startsWith(County, "J") | startsWith(County, "K") | startsWith(County, "L") | startsWith(County, "M") | startsWith(County, "N") | startsWith(County, "O") | startsWith(County, "P") | startsWith(County, "Q") | startsWith(County, "R")) 
+crime_a_r_0$County <- gsub("County", "", crime_a_r_0$County)
+
+crime_s_z_0 <- crime_evictions %>% filter(startsWith(County, "S") | startsWith(County, "T") | startsWith(County, "U") | startsWith(County, "V") | startsWith(County, "W") | startsWith(County, "X") | startsWith(County, "Y") | startsWith(County, "Z")) 
+crime_s_z_0$County <- gsub("County", "", crime_s_z_0$County)
+
+
+
+a_r_0 <- ggplot(crime_a_r_0) +
+  geom_col(aes(x=County, y=Violent_sum, fill=County), show.legend = TRUE) +
+  # geom_point(size=3, alpha=.5,aes(x=Year, y=evictions, col="Evictions"), show.legend = TRUE) +
+  labs(x="County",
+       y="Count") +
+  ylim(0, 1050000) +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1, size=9))
+#   ggsave("violent_crime_evictions_all.png"
+
+
+
+s_z_0 <- ggplot(crime_s_z_0) +
+  geom_col(aes(x=County, y=Violent_sum, fill=County), show.legend = TRUE) +
+  # geom_point(size=3, alpha=.5,aes(x=Year, y=evictions, col="Evictions"), show.legend = TRUE) +
+  labs(y="Count") +
+  ylim(0, 1050000) +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none", axis.text.x = element_text(angle = 90, hjust = 1, size=9))
+#   ggsave("violent_crime_evictions_all.png"
+
+# pdf("foo.pdf")
+grid.arrange(a_r_0, s_z_0, ncol=2)
+# dev.off()
+```
+

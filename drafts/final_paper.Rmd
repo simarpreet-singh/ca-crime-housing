@@ -1,0 +1,440 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+<style>
+th, td {
+    padding-left: 3%;
+}
+
+</style>
+
+
+
+```{r message=FALSE, include=FALSE, echo=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stargazer)
+library(tibble)
+library(psych)
+```
+
+```{r include=FALSE, echo=FALSE}
+crime_85_17_raw <- read.csv('./data/crime/crime_clearances_85-17.csv', stringsAsFactors = FALSE)
+#pull in evictions data
+evictions_raw <- read.csv("./data/evictions/counties-eviction-lab.csv")
+```
+
+
+# Cleaning the Crime Data
+
+
+*****
+
+```{r}
+# filter data to 2000 to 2016
+crime_00_16_raw <- crime_85_17_raw %>% filter(Year %in% c(2000:2016))
+
+# select only violent crimes (homicide, rape, robbery, and aggravated assault)
+crime_00_16_violent <- crime_00_16_raw %>% select(Year:NCICCode, Violent_sum, Homicide_sum, ForRape_sum, Robbery_sum, AggAssault_sum)
+
+crime_00_16_violent <- crime_00_16_violent %>% group_by(County, Year) %>% summarise(violent_crime = sum(Violent_sum), homicide = sum(Homicide_sum), rape = sum(ForRape_sum), robbery = sum(Robbery_sum), agg_assault = sum(AggAssault_sum))
+
+
+#view the crime data
+head(crime_00_16_violent) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+```
+
+
+# Cleaning the Evictions Data (for Merging with Crimes Data)
+
+```{r}
+# create unique id for evictions data
+evictions_name <- evictions_raw %>% mutate(name_no_space = gsub(" ","_",name))
+evictions <- evictions_name %>% mutate(uid = tolower(paste(as.character(name_no_space), as.character(year), sep="_")))
+```
+
+```{r}
+# create unique id for crimes data and merge column
+crime_name <- crime_00_16_violent %>% mutate(name_no_space = gsub(" ","_",County))
+crime <- crime_name %>% mutate(uid = tolower(paste(as.character(name_no_space), as.character(Year), sep="_")))
+```
+
+```{r}
+# join the two datasets
+crime_evictions_raw <- left_join(crime,evictions, by="uid")
+```
+
+```{r}
+# The joined datasets 
+data <- crime_evictions_raw %>% select(-c(year, name, name_no_space.y, name_no_space.x, parent.location)) %>% select(County:agg_assault, uid:subbed)
+ 
+head(data) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%")
+```
+
+
+
+
+```{r}
+
+data %>% filter(violent_crime == max(violent_crime) & population == min(population)) %>% group_by(County) %>% filter()
+```
+
+```{r}
+data %>% group_by(County) %>% summarise(vcp = sum(violent_crime_p)) %>% filter(vcp == min(vcp))
+```
+
+
+The County with an average violent crime count above the 75th quantile ( i.e. the countioes with the most violent crime), but the smallest population (in that group)
+
+```{r}
+data
+data_sum <- data %>% group_by(County) %>% summarise(vc_sum = mean(violent_crime), pop = mean(population), vcpop = mean(violent_crime_p)) 
+quantile(data_sum$vc_sum)
+quantile(data_sum$pop)
+
+most_county_name <- data_sum %>% filter(vc_sum >= 2192) %>% arrange(pop) %>% filter(pop == min(pop)) %>% select(County)
+most_county_name <- most_county_name$County
+
+
+data_sum %>% arrange(desc(vc_sum))
+```
+
+The County with an average violent crime count above the 25th quantile ( i.e. the counties with the least violent crime), but the smallest population (in that group)
+
+```{r}
+least_county_name <- data_sum %>% filter(vc_sum <= 141) %>% arrange(desc(pop)) %>% filter(pop == max(pop)) %>% select(County)
+#least_county_name <- least_county_name$County
+least_county_name <- "Calaveras County"
+```
+
+
+
+# Analysis 
+
+
+Making crime counts proportional to population size:
+
+```{r}
+data <- data %>% mutate(violent_crime_p = violent_crime/population, homicide_p = homicide/population, rape_p = rape/population, robbery_p = robbery/population, agg_assault_p = agg_assault/population)
+```
+
+Making # evictions filed  proportional to population size:
+
+```{r}
+data <- data %>% mutate(eviction_filings_p = eviction.filings/population)
+```
+
+
+```{r}
+head(data) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%")
+```
+
+
+
+County with Least Violence But Large Population 
+vs
+County with A lot fo violence but small population
+```{r}
+least_county_name
+most_county_name
+```
+
+
+```{r}
+main_counties <- data %>% filter(County == least_county_name | County == most_county_name) 
+not_main_counties <- data %>% filter(County != least_county_name & County != most_county_name)
+
+
+main_counties %>% filter(County == most_county_name) 
+```
+
+
+
+
+
+
+```{r}
+ggplot(main_counties, aes(Year, violent_crime, color=County))+
+  geom_line()+
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  labs(title="Violent Crime in Tulare and Calaveras County",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom") +
+  ggsave("violent_crime_2counties.png")
+```
+
+
+```{r}
+ggplot(data_sum %>% filter(County != "Los Angeles County"), aes(vc_sum, pop, color=County))+
+  geom_point()+
+  geom_hline(yintercept = mean(data_sum$pop)) +
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  # labs(title="Violent Crime in Tulare and Calaveras County",
+  #      subtitle="2000 to 2016",
+  #      caption="Data Source: Open Justice", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "none")
+```
+
+```{r}
+data_sum %>% filter(County == "Stanislaus County" | County == "Ventura County") 
+
+data_sum %>% mutate(vcpop100 = vcpop*100) %>% arrange(desc(vcpop100), pop, desc(vc_sum))
+```
+
+```{r}
+most_v_counties <- data %>% group_by(County) %>% summarise(vc = mean(violent_crime), vcp = mean(violent_crime_p)) %>% filter(vcp > mean(vcp)) %>% arrange(desc(vc)) %>% select(County) %>% head(5)
+
+most_v <- data %>% filter(County %in% most_v_counties$County)
+```
+
+
+
+```{r}
+ggplot(most_v, aes(Year, violent_crime, color=County))+
+  geom_line()+
+  #geom_line(aes(Year, evictions))+
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  labs(title="Violent Crime in Tulare and Calaveras County",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+  #ggsave("violent_crime_2counties.png")
+```
+
+
+
+
+*******
+
+
+```{r}
+0.8653375-0.5873318
+```
+
+
+
+
+The population in SJ county is less than Fresno County, however, the Crime rate (total crime/population) is higher. 
+
+```{r}
+sj_fr <- data %>% filter(County == "San Francisco County" | County == "Alpine County")
+```
+
+
+
+```{r}
+ggplot(sj_fr, aes(Year, violent_crime, color=County))+
+  geom_line()+
+  geom_line(aes(Year, evictions), linetype="dotdash")+
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  labs(title="Violent Crime in San Joaquin and Fresno County",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom")
+  #ggsave("violent_crime_2counties.png")
+```
+
+
+
+```{r}
+
+```
+
+
+
+
+```{r}
+data %>% group_by(County) %>% summarise(vc = sum(violent_crime)) %>% arrange((vc))
+data %>% filter(County== "Alpine County")
+```
+
+
+```{r}
+data <- data %>% mutate(
+  non_white = ifelse(pct.white < 1, 1, 0)
+  )
+```
+
+
+```{r}
+ggplot(data %>% filter(County == "Los Angeles County" | County == "San Joaquin County"), aes(Year, violent_crime, color=County))+
+  geom_line()+
+  geom_line(aes(Year, evictions), linetype="dotdash")+
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  labs(title="Violent Crime in San Joaquin and Fresno County",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom")
+  #ggsave("violent_crime_2counties.png")
+```
+
+
+
+```{r}
+ggplot(data, aes(County, evictions))+
+  geom_col(aes(fill=pct.white))+
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  labs(title="Violent Crime in San Joaquin and Fresno County",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom")
+  #ggsave("violent_crime_2counties.png")
+```
+
+```{r}
+inst <- data %>% group_by(County) %>% summarise(ev = sum(evictions), evf = sum(eviction.filings), vc = sum(violent_crime)) %>% arrange(desc(evf)) %>% filter(!is.na(evf)) %>% filter(County != "Alpine County") %>% select(County)
+
+high_names <- inst[2:4,]
+mid_names <- inst[10:12,]
+low_names <- inst[21:23,]
+
+high_e <- data %>% filter(County %in% high_names$County) %>% mutate(instability_level = "Most Unstable")
+med_e <- data %>% filter(County %in% mid_names$County) %>% mutate(instability_level = "Median Unstable")
+low_e <- data %>% filter(County %in% low_names$County) %>% mutate(instability_level = "Least Unstable")
+
+high_v <- data %>% filter(County %in% high_names$County) %>% mutate(violence_level = "Most Violent")
+med_v <- data %>% filter(County %in% mid_names$County) %>% mutate(violence_level = "Median Violent")
+low_v <- data %>% filter(County %in% low_names$County) %>% mutate(violence_level = "Least Violent")
+
+
+hml_e <- rbind(high_e,med_e,low_e)
+hml_v <- rbind(high_v,med_v,low_v)
+```
+
+```{r}
+ggplot(hml_e, aes(County, violent_crime))+
+  geom_col(aes(fill=instability_level))+
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  labs(title="Violent Crime Counts by Eviction Filing Level in CA",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="County", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1, size=9))+
+  ggsave("./final_graphs/violent_crime_2counties.png")
+
+```
+
+
+```{r}
+quantile(data$eviction.filings, na.rm=TRUE)
+data <- data %>% mutate(
+  instability_level = ifelse(eviction.filings > 1700, "Most Unstable", ifelse(eviction.filings <= 1700 & eviction.filings > 85, "Median Unstable", ifelse(eviction.filings <= 85, "Least Stable", 0)))
+)
+```
+
+
+```{r}
+model_1 <- lm(violent_crime ~ factor(instability_level), data=data)
+stargazer(model_1, type="text")
+```
+
+
+```{r}
+levs <- c("Least Instability", "Median Instability", "Most Instability")
+amts <- c(76.214, 939.570, 12069.650)
+sigs <- c("...", "...", "p<.01")
+
+effect_unst <- data.frame(levs = levs, amts = amts, Significance = sigs)
+
+ggplot(effect_unst, aes(levs, amts, shape=Significance, color=Significance))+
+  geom_point(size=5)+
+  labs(title="Effect of Eviction Filings Level on Violent Crime Count",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Instability Level (Eviction Filings)", y="Average Effect Size") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  ggsave("./final_graphs/effect_instability.png")
+```
+
+
+```{r}
+# More volatility in violence, in unstable group 
+
+ggplot(hml_e, aes(Year, violent_crime, color=instability_level, linetype=County))+
+  geom_line()+
+  facet_grid(cols = vars(instability_level))+ 
+  labs(title="Time Trend of Violent Crime Count by Instability Level",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  ggsave("./final_graphs/time_trend_violence_main.png")
+```
+
+```{r}
+
+# Also More Volatility in Eviction Filings 
+
+ggplot(hml_e %>% filter(instability_level=="Most Unstable"), aes(Year, eviction.filings, color=County))+
+  geom_line()+
+  labs(title="Time Trend of Eviction Filings for Counties with most Eviction Filings",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Eviction Filings") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  ggsave("./final_graphs/time_trend_evictions_most_unstable.png")
+```
+
+```{r}
+data_no_na <- data %>% filter(!is.na(eviction.filings))
+cor(data_no_na$violent_crime, data_no_na$eviction.filings)
+```
+```{r}
+data_year <- data_no_na %>% group_by(Year) %>% summarise(vc = sum(mean(violent_crime)), evf = sum(mean(eviction.filings)))
+
+ggplot(data_year, aes(Year, vc))+
+  geom_point(aes(color="Violent Crime Counts"))+
+  geom_line(aes(color="Violent Crime Counts"))+
+  geom_point(aes(Year, evf, color="Eviction Filings"))+
+  geom_line(aes(Year, evf, color="Eviction Filings"))+
+  labs(title="Time Trend of Eviction Filings and Violent Crime, California",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Violent Crime / Eviction Filings") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  ggsave("./final_graphs/time_trend_total.png")
+```
+
+```{r}
+data_corr <- data_no_na %>% group_by(Year) %>% summarise(corr_e_v = cor(violent_crime, eviction.filings))
+
+ggplot(data_corr, aes(Year, corr_e_v))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept = mean(data_corr$corr_e_v), color="tomato2")+
+  annotate("text", x=2002, y=.97, label="Average Correlation")+
+  labs(title="Correlation between Violent Crime and Eviction Filings, by Year in California",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Correlation") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))+
+  ggsave("./final_graphs/corr_yearly.png")
+```
+
+
+
+```{r}
+model_2 <- lm(violent_crime_p ~ eviction_filings_p, data = data)
+stargazer(model_2, type="latex", title="Effect of Eviction Filings Rate on Violent Crime Rate")
+```
+
+
+$$
+\frac{Eviction \space Filings}{Population}
+$$
+$$
+\frac{Violent \space Crimes}{Population}
+$$
