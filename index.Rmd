@@ -1,0 +1,1140 @@
+---
+title: "Housing Instability and Crime In California"
+subtitle: "A Comparative Analysis of How Housing Instability Might Contribute to Violent Crime."
+author: "Simarpreet Singh"
+date: "June 9, 2019"
+navbar: true  
+output:
+  html_document:
+    code_folding: hide
+    number_sections: true
+  
+
+---
+<style>
+* {
+font-family: nyt-imperial, georgia, open sans;
+}
+
+h1.title, h1 {
+  text-align: center;
+}
+
+h3.subtitle {
+  text-align: center;
+  font-size: 1.1em;
+}
+
+h4.author, h4.date { 
+  text-align: center;
+  font-size: .8em;
+}
+
+p {
+
+line-height: 1.8125rem;
+}
+
+body {
+  padding-left: 25%;
+  padding-right: 25%;
+}
+
+.code_r {
+width: 100%
+}
+
+.center {
+text-align: center
+}
+
+.pos-center {
+display: flex;
+flex-direction: center;
+justify-content: center;
+
+}
+</style>
+
+
+
+
+```{r message=FALSE, include=FALSE, echo=FALSE}
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+library(stargazer)
+library(tibble)
+library(psych)
+```
+
+```{r include=FALSE, echo=FALSE}
+crime_85_17_raw <- read.csv('./data/crime/crime_clearances_85-17.csv', stringsAsFactors = FALSE)
+#pull in evictions data
+evictions_raw <- read.csv("./data/evictions/counties-eviction-lab.csv")
+```
+
+
+
+******* 
+
+# Abstract
+
+***** 
+
+<br>
+
+In this research project, I aimed to investigate the contribution of housing instability to violent crime in California. The main social theoretical question that drove this research project was: 
+
+<div class="center"> <h5> ***What social and institutional conditions lead to high crime rates in a community?*** </h5> </div>
+
+Specifically, I examined the interactions between violent crime counts and housing instability (through evictions data) in three groups of counties in California. This included a group of three counties with high housing instability (HG), a group of three counties with median levels of housing instability (MG), and lastly a group of three counties with the least housing instability (LG). Why three groups? Through exploratory analysis, I found that different counties have different reasons for high housing instability. In some counties, there is a great amount of instability amongst a small population whereas in other counties there is a great amount of instability amongst a very large population. Since the data I used in this project does not contain information that allows us to calculate population density and population distribution amongst the county, I included three counties in each of the three groups with varying population to instability ratios.
+
+The empirical research questions that oriented this project were: From the years 2000 to 2016 what is the correlation between violent crime and eviction filings? Is the distribution of eviction filings across these groups correlated with the distribution of crime? How do violent crime counts covary with eviction filings? 
+
+To address these empirical research questions, I explored violent crime and clearances data collected by the California Department of Justice’s Open Justice program. Specifically, I surveyed the data for the years 2000 to 2016, by county in California. In addition to the crimes and clearances data, I studied evictions data collected by the Eviction Lab at Princeton University, for the years of 2000 to 2016. Lastly, to understand the demographic component of evictions and violent crime, I utilized census data that is included in the Eviction Lab’s dataset for each county in each year of interest. I focussed on the distribution of violent crime and the distribution of evictions across these county groups in California.
+
+The sixteen year period that I focussed on in this paper is critical to explore the relationship between housing instability and violent crime as the issue of housing instability has increasingly become a mainstream issue in this time period. This is especially true in the large metropolitan areas of the state such as Los Angeles and the San Francisco Bay Area. Moreover, this time period is one of the only time periods where there exists rich data on both violent crimes and evictions.
+
+In terms of relevance, data collected by the Department of Housing and Community Development (HCD) indicates that housing instability has been an important factor in decreasing access to livable housing conditions for certain, often marginalized, vulnerable communities (i.e. the homeless). For example, on a given night in 2016, 22% of the entire nations homeless population was from California (SHA_Final_Combined.pdf, n.d.). Eviction itself is an interesting indicator of housing instability as there is subjective measure involved in deciding whether a tenant continues to occupy a property or not (i.e. a landlord’s opinion of a tenant), as compared to other causes of housing instability such as rent increases. There is also a large body of research on how marginalized communities are often the ones that are impacted the most by crime. For example, individuals who live in deprived urban areas, or are members of an ethnic minority group “have a particularly high risk of being victims of burglary, car crime and violence” (Jones & Maguire, n.d.). Putting these two ideas together, it is constructive to explore the hypothesis that housing instability contributes to crime rates. 
+
+This topic is important to study right now as rising housing instability is becoming a larger problem, especially in places like the San Francisco Bay Area where in San Francisco almost 85% of the total population was homeless in 2017 (“Homelessness in the Bay Area,” 2017). These astonishingly large numbers of people experiencing some form of housing instability provokes fear that it might lead to other detriments to people’s lives, such as violent crime and becoming victims of violent crime. Specific concerns about housing instability include the volatility of changing schools for children and a lack of financial resources leading to petty theft or other crimes, and more. Studying this topic will contribute to our understanding of how housing instability interacts with crime and what populations are most affected by it across California’s most impacted counties.
+
+Additionally, more research into this relationship poses a valuable opportunity for policy makers to design housing policy that takes into account the proxy-effects of housing instability on the larger well being of a community, beyond just the access to housing itself.
+
+
+
+
+<br>
+
+***** 
+
+# Data Context and Historical Background
+
+*****
+
+<br>
+
+## Collection and Reporting 
+<br>
+
+The primary dataset this project utilizes is Crimes and Clearances (including Arson) (CCA). The CCA dataset is collected by the Department of Justice’s (DOJ) Criminal Justice Statistics Center (CJSC), directly from law enforcement agencies (LEA) across the state. The CJSC’s role as a Statistical Analysis Center (SAC) “is to collect and report statistical data that allow for valid assessments of crime and the criminal justice process in California” (“About CJSC,” 2012). Meaning, the CJSC collects the raw data from the various LEAs and then aggregates it. This is important to note, as the data reported in this dataset is not the exact data collected. The data collected is the actual individual crime records whereas the data reported in this dataset is statistical information - in this case, aggregate summaries -  about those records.
+
+This model of reporting statistical data implicitly means that there are certain methodologies and practices that are implemented not only at the point of collection but also in the manner the data is reported in its final form. An example of how this model of reporting the data effects how the numbers in the dataset are quantified, is the hierarchy rule. The hierarchy rule is a method that is used to report multiple crimes that occured during a single event. The rule prioritizes only the most serious (based on hierarchy) crime and reports that crime alone. Therefore, if there were five crimes that could be charged at a single event, only the worst crime is reported and the others are not present in this aggregated summary. Only arson is exempt from this rule as it often occurs alongside other crimes and therefore using this rule would significantly omit arson from the dataset. The DOJ does state that this rule should be taken into account in analyses that are done using the CCA dataset. However, this poses some vital issues that should be understood or at least questioned before performing an analysis on the data. Firstly, what is the hierarchy that is used in this rule? Specifically, through what decision making points are certain crimes ranked as worse than others? Secondly, how does this hierarchy affect the counting (or discounting) of certain crimes over others in this dataset? For example, since murder is ranked as worse than sexual assault, only the murder would be counted (scored, in the UCR’s language) in an event where both crimes occured (Uniform Crime Reporting Handbook, n.d.). However, this would mechanically discount several cases where sexual assault on an individual leads to their death, telling a very different story about violent crime and sexual assault.
+
+## Institutional Context and History
+<br>
+
+Both the DOJ and the CJSC are a part of the office of the California Attorney General (currently held by Xavier Becerra). At the top-level, this data collection and aggregation by the CJSC is a part of the Federal Bureau of Investigation’s (FBI) Uniform Crime Reporting Program (UCR). The UCR program is an initiative of the FBI that was officially put into production in 1930. The primary goal of the UCR program is to “generate reliable information for use in law enforcement administration, operation, and management.” However, due to the vast amount of crime data and its uniform reporting system, the datasets by the UCR program have become a “leading social [indicator]” for the country (“Uniform Crime Reporting (UCR) Program,” n.d.). 
+
+Overall, the data flows from LEAs (where it is created) to the CJSC where it is aggregated and summarized, and then through the DOJ and the California Attorney General’s office where it is published via the Open Justice web portal. The entire program is mandated by the FBI’s UCR program.
+
+## Legal Context
+<br>
+
+Though the UCR program is based around voluntary reporting by 18,000 LEAs, legally, the California DOJ has the authority to collect the crime and clearances data based on government code sections 13010-13012 and 13020-13023. 
+
+Code sections 13010-13012 mandate that the DOJ “collect crime data and report the results annually” and sections 13020-13023 provide the DOJ with the necessary authority to make LEAs report this data to them and publish it by every July 1st on the Open Justice Web Portal (introduction.pdf, n.d., “Codes Display Text,” n.d.). Though the LEAs operate on a voluntary basis, the government code sections mentioned above require and allow the DOJ to obtain the data and publish it on an annual basis. This means that each reporting agency does provide their crimes records as the DOJ is required and authorized to collect it from them, however, if they were not authorized to do so, the LEAs could opt to not provide these numbers. This is another important note on the context of this data as it indicates an effort of institutionalized transparency in publishing and disseminating data that plays an enormous role in civic engagement and the public’s interest. Moreover, it stipulates a sort-of balance between different state actors; agents producing this data do not solely decide what is done with the data nor is it solely the decision of those that publish this data.
+
+## Accessibility
+<br>
+
+Regarding accessibility, this dataset, along with all other DOJ datasets, is housed online in a static web-page on the DOJ’s Open Justice web portal. Although the web portal is simple to use and there are no walls in front of the data, it is important to note that there is no API to call the data programmatically. As access to large datasets is becoming ingrained in civic engagement initiatives and government transparency, it is important to have digital, programmatic methods of incorporating data into centralized data portals. This extra layer of access allows individuals to create modern tools and information sources that are scalable, accessible, and transparent. Though the Open Justice web portal is simple to use, efforts to make it accessible for larger, automated systems that governments, organizations, and the public are building is an important next step.
+
+<br>
+
+***** 
+
+# Exploratory Data Analysis
+
+*****
+
+<br>
+
+## Structure, Patterns, and Anomalies
+<br>
+
+This section explores the individual structures of the datasets used in this research project as well as the structure of the final dataset after it was filtered, cleaned, and re-organized. In addition to structure, this section will also examine the extent to which data is missing and how that affects the analysis of this research project. 
+
+### Crimes Data
+<br>
+
+#### Structure
+<br>
+
+The CCA dataset describes crimes across counties in California from the years 1985 to 2017. For this project, I subsetted the dataset to only contain information for the years 2000 to 2016.
+
+```{r}
+# filter data to 2000 to 2016
+crime_00_16_raw <- crime_85_17_raw %>% filter(Year %in% c(2000:2016))
+
+head(crime_00_16_raw) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+```
+
+<br>
+
+In its original form, this is a panel dataset that is indexed by a unique law enforcement agency, in a unique county from the set of all California counties, and time (a year from 2000 to 2016). The actual crimes are described by a total sum of the number of each type of crime in a given county in a given year. In addition to crimes, there is also data on total clearances of crimes and arson (which is represented uniquely from other crimes).
+
+The rows in this dataset represent the total number of a type of crime as reported by a law enforcement reporting agency in a given county, in a year from 2000 to 2016. Meaning, for each county in a given year, there are $N$ number of records if there are $N$ number of reporting agencies. The columns represent the total count for the type of crime, the total count of clearances for a type of crime, and the total count of arson events.
+
+Thus, for an arbitrary county, County A, for example, with 2 law enforcement reporting agencies, the dataset would be constructed as such: 
+
+<br>
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg .tg-npz6{background-color:#c0c0c0;border-color:#000000;text-align:center;vertical-align:top}
+.tg .tg-k7ar{font-weight:bold;background-color:#c0c0c0;border-color:#000000;text-align:center;vertical-align:top}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:top}
+</style>
+
+<div class="pos-center">
+<table class="tg">
+  <tr>
+    <th class="tg-k7ar">County</th>
+    <th class="tg-k7ar">Year</th>
+    <th class="tg-k7ar">Reporting Agency</th>
+    <th class="tg-k7ar">Total Violent Crime</th>
+    <th class="tg-k7ar">Total Homicides</th>
+    <th class="tg-npz6">$\dots$</th>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2000</td>
+    <td class="tg-c3ow">$Agency_{1}$</td>
+    <td class="tg-c3ow">$X_{1}$</td>
+    <td class="tg-c3ow">$Y_{1}$</td>
+    <td class="tg-c3ow">$Z_{1}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2000</td>
+    <td class="tg-c3ow">$Agency_{2}$</td>
+    <td class="tg-c3ow">$X_{2}$</td>
+    <td class="tg-c3ow">$Y_{2}$</td>
+    <td class="tg-c3ow">$Z_{2}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2001</td>
+    <td class="tg-c3ow">$Agency_{3}$</td>
+    <td class="tg-c3ow">$X_{3}$</td>
+    <td class="tg-c3ow">$Y_{3}$</td>
+    <td class="tg-c3ow">$Z_{3}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2001</td>
+    <td class="tg-c3ow">$Agency_{4}$</td>
+    <td class="tg-c3ow">$X_{4}$</td>
+    <td class="tg-c3ow">$Y_{4}$</td>
+    <td class="tg-c3ow">$Z_{4}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+  </tr>
+</table>
+</div> 
+
+<br>
+<br>
+
+
+Though the dataset as provided by the DOJ contains information on multiple types of crimes, I only used data on violent crime. This narrowed down the crime variables of interest to the following list:
+
+* **Violent_sum**: Total count of violent crimes in a given county in a given year, as reported by a specific reporting agency.
+  + The sum of homicide, rape, robbery, and aggravated assault.
+
+* **Homicide_sum**: Total count of homicides in a given county in a given year, as reported by a specific reporting agency.
+
+* **ForRape_sum**: Total count of rapes in a given county in a given year, as reported by a specific reporting agency.
+  + Prior to 2014, this variable only includes data on what was considered Forcible Rape.
+
+* **Robbery_sum**: Total count of robberies in a given county in a given year, as reported by a specific reporting agency.
+
+* **AggAssault_sum**: Total count of Aggravated Assaults in a given county in a given year, as reported by a specific reporting agency.
+  + Def. A criminal assault — "a threat or physical act that creates a reasonable apprehension of imminent harmful or offensive contact with one’s person — involving an additional, aggravating factors, such as the intent to inflict serious bodily injury or the use of a dangerous weapon" (Anonymous, 2010).
+
+<br>
+
+```{r}
+# select only violent crimes (homicide, rape, robbery, and aggravated assault)
+crime_00_16_violent <- crime_00_16_raw %>% select(Year:NCICCode, Violent_sum, Homicide_sum, ForRape_sum, Robbery_sum, AggAssault_sum)
+
+head(crime_00_16_violent) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+```
+
+<br>
+
+Moreover, I also re-structured the dataset so that each record reflects the total violent crime in a given county, in a given year, rather than the total violent crime reported by each law enforcement reporting agency in a given county, in a given year. 
+
+Therefore the final crime dataset that was used in the analysis of this project was structured as such: 
+
+<br>
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg .tg-34fe{background-color:#c0c0c0;border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-zlqz{font-weight:bold;background-color:#c0c0c0;border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:top}
+</style>
+
+<div class="pos-center">
+<table class="tg">
+  <tr>
+    <th class="tg-zlqz">County</th>
+    <th class="tg-zlqz">Year</th>
+    <th class="tg-zlqz">Total Violent Crime</th>
+    <th class="tg-zlqz">Total Homicides</th>
+    <th class="tg-34fe">$\dots$</th>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2000</td>
+    <td class="tg-c3ow">$X_{total \space 2000}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2000}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2000}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2001</td>
+    <td class="tg-c3ow">$X_{total \space 2001}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2001}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2001}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2002</td>
+    <td class="tg-c3ow">$X_{total \space 2002}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2002}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2002}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+  </tr>
+</table>
+</div>
+
+<br>
+<br>
+
+Where the violent crime variables of interest are:
+
+* **violent_crime**: Total count of violent crimes in a given county in a given year.
+
+* **homicide**: Total count of homicides in a given county in a given year.
+
+* **rape**: Total count of rapes in a given county in a given year.
+
+* **robbery**: Total count of robberies in a given county in a given year.
+
+* **agg_assault**: Total count of aggravated assaults in a given county in a given year.
+
+<br>
+
+```{r}
+crime_00_16_violent <- crime_00_16_violent %>% group_by(County, Year) %>% summarise(violent_crime = sum(Violent_sum), homicide = sum(Homicide_sum), rape = sum(ForRape_sum), robbery = sum(Robbery_sum), agg_assault = sum(AggAssault_sum))
+
+
+#view the crime data
+head(crime_00_16_violent) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+```
+
+<br>
+
+#### Missing Values
+<br>
+With respect to missing values, there appeared to be no missing values in the CCA dataset. However, in the *raw* dataset, there are records that contain a zero or negative count under many variables. These zero and negative values are not described in the data dictionary.
+
+In total, there are zero records in the raw dataset where a violent crime variable has an NA value, eight records with a violent crime variable that has a negative value, and lastly 7,864 records  with a violent crime variable that has a zero value. 
+
+<br> 
+<br>
+
+**Records with $NA$ values in violent crime variables of interest**:
+
+```{r}
+na <- crime_00_16_raw %>% filter_at(vars(-Year, -County, -NCICCode), all_vars(is.na(.))) 
+na %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+```
+
+<br> 
+<br>
+
+**Records with $< 0$ values in violent crime variables of interest**
+
+```{r}
+
+lzo <- crime_00_16_raw %>% filter(Violent_sum < 0 | Homicide_sum < 0 | ForRape_sum < 0 | Robbery_sum < 0 | AggAssault_sum < 0) 
+
+lzo %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+```
+
+<br> 
+<br>
+
+**Records with $0$ values in violent crime variables of interest**
+
+```{r}
+
+zo <- crime_00_16_raw %>% filter(Violent_sum == 0 | Homicide_sum == 0 | ForRape_sum == 0 | Robbery_sum == 0 | AggAssault_sum == 0) 
+
+cat("Total records with 0 values in violent crime variables of interest: ", length(zo$Year))
+
+head(zo) %>% 
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+
+
+```
+
+<br>
+<br>
+
+### Evictions Data 
+<br>
+
+#### Structure
+<br>
+
+The data set I elected to join with the primary CCA dataset is county-level evictions data from the Eviction Lab. The Eviction Lab is an initiative at Princeton University where they built the country’s first nation-wide database of evictions. This particular dataset is at the county level and provides information on number of evictions, evictions filing rate, information on housing such as percent renter dwellings and demographic information for each county. The evictions dataset covers the time range of 2000-2016, and every county in California.
+
+Similar to the final structure of the CCA dataset, this dataset contains eviction information on each county in each year from 2000 to 2016. However, in addition to eviction information, the Eviction Lab also provided demographic information and population counts for each county from the United States Census.
+
+Therefore, the final structure is as follows:
+
+<br> 
+
+<style type="text/css">
+.tg  {border-collapse:collapse;border-spacing:0;}
+.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}
+.tg .tg-kt03{font-family:Georgia, serif !important;;border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-34fe{background-color:#c0c0c0;border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-zlqz{font-weight:bold;background-color:#c0c0c0;border-color:inherit;text-align:center;vertical-align:top}
+.tg .tg-c3ow{border-color:inherit;text-align:center;vertical-align:top}
+</style>
+
+<div class="pos-center">
+
+<table class="tg">
+  <tr>
+    <th class="tg-zlqz">County</th>
+    <th class="tg-zlqz">Year</th>
+    <th class="tg-zlqz">Total Evictions </th>
+    <th class="tg-zlqz">Eviction Rate</th>
+    <th class="tg-34fe">$\dots$</th>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2000</td>
+    <td class="tg-kt03">$X_{total \space 2000}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2000}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2000}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2001</td>
+    <td class="tg-c3ow">$X_{total \space 2001}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2001}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2001}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2002</td>
+    <td class="tg-c3ow">$X_{total \space 2002}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2002}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2002}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+  </tr>
+</table>
+</div>
+
+<br>
+<br>
+
+Where each row represents a county in a given year from the set of years from 2000 to 2016.
+
+The variables of interest in this dataset are: 
+
+* **evictions**: the total evictions in a county in a given year.
+
+* **eviction filings**: the total number of eviction filings in a county in a given year. 
+
+* **population**: the population of a in a county in a given year.
+
+<br>
+<br>
+
+#### Missing Values
+<br>
+
+The evictions dataset is missing eviction filings counts for 32 unique counties across all years from 2000 to 2016. This missing data poses issues for this analysis as many counties that fall into the lower end of the distribution of population are missing data for evictions. This analysis is centered around grouping counties based on eviction filings to mitigate the role of population by including counties with varying sizes. This missing data directly alters which sized counties are permitted into which group (HG, MG, or LG) as these counties are not able to be used in the grouped analysis.  
+<br>
+
+```{r}
+na_ev <- evictions_raw %>% filter(is.na(eviction.filings))
+
+cat("Number unique years missing eviction filings data: ", length(unique(na_ev$year)))
+cat("Number unique counties missing eviction filings data: ", length(unique(na_ev$name)))
+
+head(na_ev) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%", height = "15%")
+```
+
+<br>
+<br>
+
+## Variation and Time
+<br>
+
+This sections explores the variation in total violent crime over the sixteen year period from 2000 to 2016. 
+
+<br>
+
+### Violence over time
+<br>
+
+To understand the relationship between violent crime and housing instability, it is important to also address the overall variation and trend in the violent crime counts over time (as it is the outcome hypothesized to be affected by housing instability). This relationship between violent crime and time is important to analyze as the total variation in violent crime is, logically, not explained completely by housing instability alone. There are likely a number of factors that lead to violent crime, and time may be an indicator of one or more of these other factors (i.e. a policy that was implemented sometime between the year 2000 and 2016). For this reason, it is useful to observe the overall time trend in violent crime alone so as to not draw conclusions about its relationship with something else, rather just understand how violent crime has changed over time.    
+
+To visualize the trend in violent crime, when the total number of violent crimes are aggregated by year, and plotted against time (in years) we see that violent crimes have been falling over the sixteen year period.
+
+<br>
+
+```{r}
+v_c_yearly <- crime_00_16_violent %>% group_by(Year) %>% summarize(violence = sum(violent_crime), homicides = sum(homicide), rapes = sum(rape), agg_assaults = sum(agg_assault))
+
+ggplot(v_c_yearly, aes(Year, violence)) +
+  geom_line(color="tomato2")+
+  labs(title="Total violent crime counts in CA",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice ", x="Time (in Years)", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1, size=9))
+  
+```
+
+<br>
+
+However, this time trend is not as significant as it might seem when plotted against time alone. When just visualizing the overall time trend in violent crime, the magnitude by which it changes from year to year is lost. Therefore, visualizing the distribution of violent crime over time is useful to see both the magnitude of the change in violent crime (i.e how much violent crime still exists after it changes in a given year) and the overall time trend.
+
+When the distribution of the aggregated number of violent crimes, by year, are visualized, it shows that despite the general decrease in violent crime, the total counts on average have fallen by about 25,000 and in total have remained within about 50,000 of 2000 levels.
+
+<br>
+
+```{r}
+ggplot(v_c_yearly, aes(Year, violence)) +
+  geom_col(fill="cornflowerblue")+
+  geom_line(color="tomato2", size=1.2)+
+  labs(title="Distribution of total ciolent crime counts in CA ",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice ", x="Time (in Years)", y="Violent Crime Count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1, size=9))
+  
+```
+
+<br>
+
+Specifically, in the year 2000, there were 210,492 violent crimes across all counties. In 2016, there were 174,701 violent crimes across all counties. In total this is a 17.0035 % decrease between the years 2000 and 2016.
+
+<br>
+
+<div class="pos-center">
+$$
+\text{Percentage decrease in violent crime}_{2000-2016} = (\frac{\text{Total Violent Crime}_{2016} - \text{Total Violent Crime}_{2000}}{\text{Total Violent Crime}_{2000}}) \times 100 = \mid -17.0035 \% \mid = 17.0035 \%
+$$
+</div>
+
+```{r}
+vc_2000 <- v_c_yearly %>% filter(Year == 2000) %>% select(violence)
+vc_2016 <- v_c_yearly %>% filter(Year == 2016) %>% select(violence)
+
+cat("The number of violent crimes in 2000 across all counties: ", vc_2000$violence)
+cat("The number of violent crimes in 20016 across all counties: ", vc_2016$violence)
+
+cat("Total violent crime has decreased by: ", -100*((vc_2016$violence - vc_2000$violence)/vc_2000$violence), "%")
+```
+
+<br>
+
+Moreover, the rate of change per year is much less significant. Computing the yearly, percentage change in violent crime as such:
+
+<br>
+
+<div class="pos-center">
+
+$$
+\text{Percentage change in violent crime}_{\text{in year } t \text{ from year t-1} } = (\frac{\text{Total Violent Crime}_{t+1} - \text{Total Violent Crime}_{t}}{\text{Total Violent Crime}_{t}}) \times 100 \space \forall \space t \in \{2000 \dots 2016\}
+$$
+
+</div>
+
+It is observed that the distribution of this change is within or close to about 5\% when violent crime decreased from a given year to the next, and around 2.5\% when violent crime increased from a given year to the next. This is true for all of the years observed in this dataset, with the exception of the most recent crime data from around 2014 to 2016. 
+
+<br>
+
+```{r warning=FALSE}
+vc_dec <- c(0)
+
+violence_by_year <- c(v_c_yearly$violence)
+
+for (i in 1:length(v_c_yearly$violence)){
+  vc_dec[i] <- (violence_by_year[i+1] - violence_by_year[i])/violence_by_year[i]
+}
+
+v_c_yearly$violence_decrease_pct <- vc_dec*100
+
+ggplot(v_c_yearly, aes(Year, violence_decrease_pct)) +
+  geom_col()+
+  labs(title="Distribution of yearly % change in violent crime counts in CA",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice ", x="Time (in years)", y="% Change in violent crime count") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1, size=9))
+
+
+```
+
+<br>
+
+Though the yearly percentage change in violent crime is fairly low, this general decreasing trend is key to testing the hypothesis that housing instability and violent crime have significant covariation. If these time trends hold consistent amongst both the violent crime data and the eviction filings data, it demonstrates that there *might* be some proportion of violent crime variation that can be explained by housing instability. 
+
+<br>
+<br>
+
+******
+# Key Findings
+<br>
+<div class="pos-center" style="text-align: center"> <h4>Insights about the relationship between housing instability and violent crimes.</h4> </div>
+******
+<br>
+
+In this section I present my core findings that address the argument that violent crime counts in a county tend to rise as housing instability rises, and fall as housing instability declines. It is critical to note that I do not argue that housing instability directly causes violent crime variation, alone, rather that it is one factor that leads to violent crime in a community. 
+
+The evidence that I found for this potential relationship can be broadly categorized by the following three empirical research questions: 
+
+1. From the years 2000 to 2016 what is the correlation between violent crime and eviction filings? 
+2. Is the distribution of eviction filings across the three groups of counties (LG, MG, HG) correlated with the distribution of crime? 
+3. How do violent crime counts covary with eviction filings? 
+
+
+To answer these questions I merged the evictions dataset with the CCA dataset. Given the individual structures of the datasets described previously, the final dataset represents a county in a year from the set of years from 2000 to 2016 and the subsequent violent crime counts, eviction information, and demographic information from the United States Census.
+
+The final data structure takes on the form:
+
+<br>
+
+<div class="pos-center">
+<table class="tg">
+  <tr>
+    <th class="tg-zlqz">County</th>
+    <th class="tg-zlqz">Year</th>
+    <th class="tg-zlqz">Total Violent Crime</th>
+    <th class="tg-zlqz">Total Homicides</th>
+    <th class="tg-34fe">$\dots$</th>
+    <th class="tg-zlqz">Evictions</th>
+    <th class="tg-zlqz">Population</th>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2000</td>
+    <td class="tg-c3ow">$X_{total \space 2000}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2000}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2000}$</td>
+    <td class="tg-c3ow">$H_{total \space 2000}$</td>
+    <td class="tg-c3ow">$W_{total \space 2000}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2001</td>
+    <td class="tg-c3ow">$X_{total \space 2001}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2001}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2001}$</td>
+    <td class="tg-c3ow">$H_{total \space 2001}$</td>
+    <td class="tg-c3ow">$W_{total \space 2001}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$County_{A}$</td>
+    <td class="tg-c3ow">2002</td>
+    <td class="tg-c3ow">$X_{total \space 2002}$</td>
+    <td class="tg-c3ow">$Y_{total \space 2002}$</td>
+    <td class="tg-c3ow">$Z_{total \space 2002}$</td>
+    <td class="tg-c3ow">$H_{total \space 2002}$</td>
+    <td class="tg-c3ow">$W_{total \space 2002}$</td>
+  </tr>
+  <tr>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+    <td class="tg-c3ow">$\dots$</td>
+  </tr>
+</table>
+</div>
+
+<br>
+
+```{r}
+# create unique id for evictions data
+evictions_name <- evictions_raw %>% mutate(name_no_space = gsub(" ","_",name))
+evictions <- evictions_name %>% mutate(uid = tolower(paste(as.character(name_no_space), as.character(year), sep="_")))
+
+# create unique id for crimes data and merge column
+crime_name <- crime_00_16_violent %>% mutate(name_no_space = gsub(" ","_",County))
+crime <- crime_name %>% mutate(uid = tolower(paste(as.character(name_no_space), as.character(Year), sep="_")))
+
+# join the two datasets
+crime_evictions_raw <- left_join(crime,evictions, by="uid")
+
+# The joined datasets 
+data <- crime_evictions_raw %>% select(-c(year, name, name_no_space.y, name_no_space.x, parent.location)) %>% select(County:agg_assault, uid:subbed)
+ 
+head(data) %>%
+  kable() %>%
+  kable_styling(bootstrap_options = "striped", full_width = F, position = "center") %>%
+  scroll_box(width = "100%")
+```
+
+
+<br>
+<br>
+
+Moving forward, there are some keywords that are vital to define and differentiate from similar verbiage used in the original *raw* datasets. The following is a list of definitions of variables that are core to the evidence and key findings that I present:
+
+1. **Violent Crimes**: Total crimes committed against a person (homicide, rape, robbery, and aggravated assault)
+2. **Violent Crime Rate**: The proportion of the population that the violent crime count constitutes. This is the ratio between the violent crime count and the population in a given county in a given year. 
+    + This value is computed by taking the ratio: $$ \frac{\text{Violent Crimes}_{t,county}}{\text{Population}_{t,county}}$$ Where $t$ represents a year $\in \{2000 \dots 2016\}$ and $county$ represents a county $\in \{\textbf{CA Counties}\}$
+3. **Evictions**: Total number of people actually evicted from their home. 
+4. **Eviction Filings**: Total number of evictions filed in court.
+5. **Eviction Filing Rate**: The proportion of the population that the eviction filings count constitutes. This is the ratio between the eviction filings count and the population in a given county in a given year. 
+    + This value is computed by taking the ratio: $$ \frac{\text{Eviction Filings}_{t,county}}{\text{Population}_{t,county}}$$ Where $t$ represents a year $\in \{2000 \dots 2016\}$ and $county$ represents a county $\in \{\textbf{CA Counties}\}$
+    + The eviction filing rate computed above is not the same thing as the filing rate in the original evictions dataset. While this computed eviction filing rate represents the share of the total population that eviction filings constitutes, the filing rate in the original dataset represents the ratio between the number of evictions filed in a county and the number of renter occupied homes in that county.  
+   
+<br>
+
+## What is the correlation between violent crime and eviction filings?
+<br>
+
+The first major piece of evidence that provides a glimpse into the potential causal relationship between housing instability and violent crime is the overall correlation between the two variables. To begin to understand the different ways housing instability and violent crime might be related, I checked to see if there exists any significant correlation, and if so, what that correlation represented. 
+
+Some specific elements that I was interested in were: 
+
+1. The degree to which eviction filings and violent crime are linearly related. This idea would be captured in the extent to which: $$\mid Corr(\text{Eviction Filings}, \text{Violent Crimes})\mid > 0 $$
+2. The direction in which eviction filings and violent crime are linearly related. Do the two variables increase together and decrease together or change in opposite directions? This idea would be captured by the overall sign of the correlation - whether $$Corr(\text{Eviction Filings}, \text{Violent Crimes}) > 0$$ or $$Corr(\text{Eviction Filings}, \text{Violent Crimes}) < 0 $$
+
+Looking into the data, I found that: 
+
+<br>
+
+<div class="center"> <h5> ***The overall correlation between eviction filings and violent crimes from 2000 to 2016, across all of the counties in California is $\approx 95\%$*** </h5> </div>
+
+<br>
+
+```{r}
+data_no_na <- data %>% filter(!is.na(eviction.filings))
+cat("The overall correlation between eviction filings and violent crime from 2000 to 2016 is ",cor(data_no_na$eviction.filings, data_no_na$violent_crime)*100, "%")
+```
+<br>
+This overall correlation is very insightful into the relationship between eviction filings and violent crime. Specifically, the correlation is significantly different from zero. Meaning, there exists an almost *perfect* linear relationship between eviction filings and violent crime in this dataset. Moreover, the direction in which eviction filings and violent crime move together is positive: as eviction filings increase, so does the violent crime count.
+
+This positive linear relationship between eviction filings and violent crime counts can be visualized by plotting the total eviction filings from each county-year combination (i.e. $County_{A}$ in the year 2000, $County_{B}$ in the year 2000, $County_{A}$ in the year 2001 ... etc.) against the total violent crime counts from each county-year combination. Then, based on this plot, a line of best-fit can be plotted that captures the $\approx 95\%$ correlation. 
+<br>
+```{r}
+ggplot(data_no_na, aes(eviction.filings, violent_crime)) +
+  geom_smooth(color="seagreen4")+
+  labs(title="Total Violent Crime and Eviction Filings in CA",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Total Eviction Filings", y="Total Violent Crimes") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1, size=9))
+```
+<br>
+Beyond the overall correlation, zooming into how this correlation interacts with time also indicates that eviction filings and violent crimes have a strong, positive linear relationship. To analyze the yearly correlation between violent crime and eviction filings, I aggregated the dataset by year and created a correlation variable that takes on the value of the correlation between eviction filings and violent crime in that year as such:
+<br>
+<div class="pos-center">
+$$
+Correlation(\text{Eviction Filings}, \text{Violent Crime})_{t} = Correlation(\text{Eviction Filings}_{\text{county}, t}, \text{Violent Crime}_{\text{county}, t}) \space \forall \space \text{counties} \in \{\text{CA Counties}\} \space \forall \space t \space \in \{2000 \dots 2016\}
+$$
+</div>
+<br>
+Plotting the correlation between eviction filings and violent crime in each year, I found that:
+<br>
+<div class="center"> <h5> ***Despite the general decline in the correlation between eviction filings and violent crime, the correlation remains significantly high in each year - $> \approx 80\%$, overall.*** </h5> </div>
+
+demonstrating that not only is the overall correlation significant, disregarding time, but the correlation between eviction filings and violent crime consistently remains significant in each year present in the dataset. 
+<br>
+```{r}
+# compute yearly correlatin(eviction filings, violent crime)
+data_corr <- data_no_na %>% group_by(Year) %>% summarise(corr_e_v = cor(violent_crime, eviction.filings))
+
+# plot the yearly correlation
+ggplot(data_corr, aes(Year, corr_e_v))+
+  geom_point()+
+  geom_line()+
+  geom_hline(yintercept = mean(data_corr$corr_e_v), color="tomato2")+
+  annotate("text", x=2002, y=.97, label="Average Correlation")+
+  labs(title="Correlation between Violent Crime and Eviction Filings, by Year in California",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Correlation") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
+
+<br>
+
+Taking into account the consistent, significant and positive correlation between eviction filings and violent crimes, I wanted to see how the two variables interact with each other over time. Therefore, I plotted both the eviction filing counts against time and the violent crime counts against time (in years).
+
+Visualizing the interactions between the two variables over time, I found that:
+
+<br>
+<div class="center"> <h5> ***The general time trend is consistent between the two variables.*** </h5> </div>
+
+With the exception of 2014 to 2016, the general trend amongst eviction filings and violent crime is consistent. Meaning, overall both eviction filings and violent crime have decreased at similar rates from 2000 to 2016. However, it is interesting to note that around 2014 violent crime has increased but eviction filings have decreased.
+
+<br>
+<div class="center"> <h5> ***Major spikes in eviction filings are associated with major spikes in violent crime.*** </h5> </div>
+
+Major spikes in violent crime counts are associated with similar spikes in eviction filings. Specifically, from around 2005 to 2011, there is a major spike in violent crime and a spike of similar magnitude in eviction filings.
+
+<br>
+<div class="center"> <h5> ***Not all major spikes in the two variables covary.*** </h5> </div>
+
+However, not all spikes are associated with one another. This is critical to note as there is not an exact linear relationship between violent crime and eviction filings. This is because, though there does exist significant correlation, not all of violent crime can be explained by eviction filings alone. 
+
+<br>
+```{r}
+data_year <- data_no_na %>% group_by(Year) %>% summarise(vc = sum(mean(violent_crime)), evf = sum(mean(eviction.filings)))
+
+ggplot(data_year, aes(Year, vc))+
+  geom_point(aes(color="Violent Crime Counts"))+
+  geom_line(aes(color="Violent Crime Counts"))+
+  geom_point(aes(Year, evf, color="Eviction Filings"))+
+  geom_line(aes(Year, evf, color="Eviction Filings"))+
+  labs(title="Time Trend of Eviction Filings and Violent Crime, California",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Violent Crime / Eviction Filings") +
+  scale_color_discrete(name = "Data Source")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
+
+<br>
+
+## Is the distribution of eviction filings correlated with the distribution of crime? 
+
+<br>
+To further assess the way in which eviction filings and violent crime interact with each other, I created three groups of counties. Each group represents three counties with: 
+
+1. Eviction filings greater than the 3rd quartile of the distribution of eviction filings - represents a group of 3 counties with high housing instability (HG).
+2. Eviction filings near the median of the distribution of eviction filings - represents a group of 3 counties with median housing instability (MG).
+3. Eviction filings below the 1st quartile of the distribution of eviction filings - represents a group of 3 counties with low housing instability (LG).
+
+Grouping the counties in this manner provides a basis to compare the different violent crime and eviction filing patterns in each group against one another to extract deeper insights into the way eviction filings and violent crime might be related.
+<br>
+```{r}
+# instability summaries 
+inst <- data %>% group_by(County) %>% summarise(ev = sum(evictions), evf = sum(eviction.filings), vc = sum(violent_crime)) %>% arrange(desc(evf)) %>% filter(!is.na(evf)) %>% filter(County != "Alpine County") %>% select(County)
+
+# county names for each group HG, MG, LG
+high_names <- inst[2:4,]
+mid_names <- inst[10:12,]
+low_names <- inst[21:23,]
+
+# filter to each group from all of data
+high_e <- data %>% filter(County %in% high_names$County) %>% mutate(instability_level = "Most Instability")
+med_e <- data %>% filter(County %in% mid_names$County) %>% mutate(instability_level = "Median Instability")
+low_e <- data %>% filter(County %in% low_names$County) %>% mutate(instability_level = "Least Instability")
+
+# create dataframe that contains each group.
+hml_e <- rbind(high_e,med_e,low_e)
+
+```
+<br>
+After defining and creating the 3 groups of varying housing instability, I plotted the distribution of violent crime amongst each of those counties in each of the groups. Visualizing this distribution, I found that:
+
+<br>
+<div class="center"> <h5> ***The counties with the highest level of instability also have the highest level of violent crime counts.*** </h5> </div>
+
+This distribution shows that HG has the highest levels of violent crime counts. In all three of the HG counties, Riverside, Sacramento, and San Diego, the violent crime counts are significantly larger than any other county from any other group. 
+
+<br>
+<div class="center"> <h5> ***The difference in violent crime between HG and MG is the most significant difference in violent crime amongst the three groups.*** </h5> </div>
+
+Moreover, not only is the violent crime count larger in HG, the *jump* in violent crime counts between MG and HG is significantly larger than any other difference in violent crime counts. This demonstrates that there might not just be higher violent crime counts in the counties with the most eviction filings, but there also might be a larger impact of eviction filings on violent crime counts as eviction filings increase. 
+<br>
+```{r}
+ggplot(hml_e, aes(County, violent_crime))+
+  geom_col(aes(fill=instability_level))+
+  #geom_line(aes(Year, eviction_filings_p), linetype="longdash")+
+  #geom_point(aes(Year, eviction_filings_p),fill=pct.white)+
+  labs(title="Violent Crime Counts by Eviction Filing Level in CA",
+       subtitle="2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="County", y="Violent Crime Count") +
+  scale_fill_discrete(name = "Instability Level")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5), legend.position = "bottom", axis.text.x = element_text(angle = 45, hjust = 1, size=9))
+```
+<br>
+To better understand the change in violent crime counts as the magnitude of housing instability changes, I regressed the level of eviction filings (i.e. if a record is associated with being in HG, MG, or LG) on the total violent crime count. This regression estimated the average effect size, or the average number of violent crimes, associated with a county having high, median, or low instability, in terms of eviction filings.
+<br>
+$$
+\text{Violent Crime Count} = \hat{\beta}_{0} + \hat{\beta}_{1}(\text{MG}) + \hat{\beta}_{2}(HG)
+$$
+<br>
+The coefficients: 
+
+1. $\hat{\beta}_{0}$ is the estimated average number of *additional* violent crimes associated with a county having low instability.  
+2. $\hat{\beta}_{1}$ is the estimated average number of *additional* violent crimes associated with a county having median instability.  
+3. $\hat{\beta}_{2}$ is the estimated average number of *additional* violent crimes associated with a county having high instability.
+
+<br>
+<div style="text-align: center">
+```{r results="asis"}
+# add instability level variable to all of dataset not just the three groups.
+# groups based on the distribution of eviction filings.
+
+data <- data %>% mutate(
+  instability_level = ifelse(eviction.filings > 1700, "Most Unstable", ifelse(eviction.filings <= 1700 & eviction.filings > 85, "Median Unstable", ifelse(eviction.filings <= 85, "Least Stable", 0)))
+)
+
+# build regression model to est. average violetn crimes from LG -> MG -> HG
+model_1 <- lm(violent_crime ~ factor(instability_level), data=data)
+
+# summarize the average effect size.
+stargazer(model_1, type="html", style="qje" , covariate.labels = c("Median Instability", "High Instability", "Low Instability"), dep.var.labels = c("Violent Crime"), title="Average Effect Size of Instability Level on Violent Crime", align = TRUE, table.placement="H")
+```
+</div>
+
+<br>
+<br>
+After estimating these coefficients, I plotted the level of instability (HG, MG, LG) against the estimated average number of *additional* violent crimes associated with a county having that level of instability (the values listed in the table above). Doing this, I found that:
+
+<br>
+<div class="center"> <h5> ***As instability increases, the number of additional violent crimes associated with the instability level increases at a faster rate.*** </h5> </div>
+
+<br>
+```{r}
+levs <- c("Least Instability", "Median Instability", "Most Instability")
+amts <- c(76.214, 939.570, 12069.650)
+sigs <- c("...", "...", "p<.01")
+
+effect_unst <- data.frame(levs = levs, amts = amts, Significance = sigs)
+
+ggplot(effect_unst, aes(levs, amts, shape=Significance, color=Significance))+
+  geom_point(size=5)+
+  labs(title="Effect of Eviction Filings Level on Violent Crime Count",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Instability Level (Eviction Filings)", y="Average Effect Size") +
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
+
+<br>
+
+The average effect size plot above, again, shows that as instability levels increase, so does the average effect size of eviction filings on violent crime: 
+<br>
+$$ 
+\text{Instability Level} \uparrow \space \Rightarrow \space \text{Violent Crime} \uparrow
+$$
+<br>
+Moreover, as the instability level rises, the actual effect of eviction filings on violent crime also increases in magnitude. Meaning, the larger the instability level, the total average effect on violent crime increases at a higher rate. This relationship can be defined mathematically as: 
+<br>
+$$
+AE_{\text{HG}} - AE_{\text{MG}}  > AE_{\text{MG}} - AE_{\text{LG}}
+$$
+<br>
+Where $AE_{\text{Instability Level}}$ represents the average effect of instability level on violent crime. So not only is increasing instability associated with increased violent crimes in this dataset, as instability increases, the number of additional violent crimes associated with the instability level increases at a faster rate.
+<br>
+
+## How do violent crime counts covary with eviction filings? 
+<br>
+In addition to the effect of instability level on violent crime count observed in this dataset, I also wanted to analyze how volatility is distributed amongst the three levels of instability. Therefore, I faceted the data by the level of instability and plotted violent crime counts against time (in years) for each facet. 
+<br>
+```{r}
+# More volatility in violence, in unstable group 
+
+ggplot(hml_e, aes(Year, violent_crime, color=instability_level, linetype=County))+
+  geom_line()+
+  facet_grid(cols = vars(instability_level))+ 
+  labs(title="Time Trend of Violent Crime Count by Instability Level",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Violent Crime Count") +
+  scale_color_discrete(name = "Instability Level")+
+  scale_linetype_discrete(name = "County")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
+<br>
+Analyzing the volatility of violent crime in each group, I found that:
+
+<br>
+<div class="center"> <h5> ***Volatility of violent crime increases as the instability level increases.*** </h5></div>
+
+The plots demonstrate that LG has the least volatility in violent crime. The violent crime count in this group with a low number of eviction filings has a mostly consistent mean over the sixteen year period from 2000 to 2016. However, when looking at the median level instability group, the volatility in violent crime begins to rise and we see more variation in violent crime counts. This effect remains true when moving on to the group with the most instability where we see that there is a very large volatility in the total number of violent crimes over time, in each of the three counties in this group.  
+
+
+<br>
+<div class="center"> <h5> ***Counties with most instability have the highest volatility of violent crime.*** </h5> </div>
+
+Similar to the mechanics of the average effect of instability level on violent crime counts, the magnitude of volatility of violent crime is also much higher as the instability level rises. This results in HG having large amounts of variation in violent crime counts where some counties even pass each other in terms of total violent crime, over the sixteen year period. This effect is unique to HG, as the other two groups are consistent in terms of which county within each group has what level of total violent crime. 
+
+This plot shows us that as instability level rises, so does the volatility in violent crime such that: 
+<br>
+$$
+\text{Instability Level} \space \uparrow \space \Rightarrow \space SD(\text{Violent Crime}) \space \uparrow
+$$
+<br>
+where $SD$ represents the standard deviation (a measure of volatility). 
+
+However, to truly test the hypothesis that housing instability is one factor that contributes to violent crimes in a county, this relationship between instability and volatility must also exist in terms of eviction filings. Therefore to explore this relationship for the eviction filing counts, I faceted the data by instability level and plotted the total eviction filing counts against time (in years) for each facet.  
+<br>
+```{r}
+ggplot(hml_e, aes(Year, eviction.filings, color=instability_level, linetype=County))+
+  geom_line()+
+  facet_grid(cols = vars(instability_level))+ 
+  labs(title="Time Trend of Eviction Filings by Instability Level",
+       subtitle="Aggregated Data from 2000 to 2016",
+       caption="Data Source: Open Justice & Eviction Lab", x="Year", y="Eviction Filings") +
+  scale_color_discrete(name = "Instability Level")+
+  scale_linetype_discrete(name = "County")+
+  theme(plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+```
+<br>
+Using this plot, I found that the same relationship between the instability level and volatility of eviction filings exists as the relationship between the instability level and volatility of violent crime. Namely, as the instability level rises, the volatility in eviction filings rises, and that the volatility in eviction filings is at its maximum in HG such that:
+<br>
+$$
+\text{Instability Level} \space \uparrow \space \Rightarrow \space SD(\text{Eviction Filings}) \space \uparrow
+$$
+<br>
+
+$$
+\underset{x \space \in \space {LG, MG, HG}}{\operatorname{arg\,max}}(SD(\text{Eviction Filings})_{x}) = \{HG\}
+$$
+<br>
+This relationship shows that not only does violent crime increase as the instability level increases, and decreases as the instability level decreases in the dataset (on average), but also that, the volatility of both eviction filings and violent crime also shares this relationship with the instability level.
+
+
+
+<br>
+
+******
+
+# Conclusion and Further Research
+
+******
+
+<br>
+
+## Data Issues
+<br>
+
+### Issues with the hierarchy rule and underreporting crimes
+<br>
+The CCA dataset used for these key findings employs the hierarchy rule which likely creates inaccuracies in the counts for crimes. The hierarchy rule specifically changes the reported variation across the counties, in terms of crime, which might not be representative of the true population variation (i.e. County A may truly have more violent crime than County B but the dataset might show the opposite). The rule might discount variation in the types of crime where if a particularly very violent crime occurs alongside significant accounts of other crimes, those would not be reported and therefore make that violent crime seem more frequent as compared to the other crimes. Moreover, a non methodological inaccuracy is posed by the idea that many crimes may just go unreported. These types of crimes are likely smaller in scale, however, integral to the social climate crime creates in communities. These crimes would not be represented in this dataset at all since these records are based on reported crimes from various law enforcement reporting agencies. This inaccuracy directly changes the distribution of crime across counties, especially if a given county has more underreporting or is impacted by the hierarchy rule disproportionately.
+
+Due to the hierarchy rule, we must also assume that the variation from county to county in terms of violent crime counts is representative of the true population difference such that the population difference is as large or proportional to the difference in crimes committed in each county.  For example, for many of my insights I group counties together and use the difference in violent crime count in each group as a reference point to understand the different relationships between eviction filings and violent crimes. However, due to the hierarchy rule, we must assume that this difference between counties is representative of the true population difference such that the true difference is as large or proportional to the difference represented in this dataset. If this is not true of the population, then essentially the *gap* in violent crime between LA county, for example, and another county would be smaller.
+
+Lastly, due to the hierarchy rule, sampling is not random as there is a subjective decision that dictates which crime, from a set of crimes committed during a single event, is reported. This implies that there is an intrinsic decision involved with the collection of crime data which may (and does, due to the mechanics of the hierarchy rule) place more weight on a given crime over other crimes. This, again, changes the distribution of crime counts by county, however, specifically because of the frequency of crime type rather than just total crimes alone.
+
+
+### Issues with formal evictions v.s. informal evictions
+<br>
+
+Similar to the issue of underreporting present in the CCA dataset, the evictions dataset from the Eviction Lab only reports *formal* evictions. These evictions are formal eviction cases where landlords filed an eviction case in court. Though the count of eviction cases might be a decent estimate of the extent to which eviction is present in a community, the issue is that a majority of eviction cases are handled outside of court. Meaning, landlords and tenants *resolved* eviction issues in private without actually taking the case to court. This dataset does not contain any information on these *informal* evictions that constitute a majority of the type of evictions communities deal with. 
+
+This has been a point of critique for the Eviction Lab as the dataset does not necessarily capture how large the issue of eviction is. The lab does recognize this issue and has made an effort to inform the public that many evictions are not captured by this dataset due to this issue.  
+
+## Conclusion and Moving Forward
+<br>
+
+In conclusion, despite the limitations of the datasets used in this project, there is significant evidence to show that violent crime counts in a county tend to rise as housing instability rises, and fall as housing instability declines. 
+
+This is demonstrated firstly by the overall correlation between violent crime and eviction filings which is $\approx 95\%$. When this correlation is observed against time (in years), it is also shown that despite decreases in correlation over the period from 2000 to 2016, it has remained well above $\approx 80\%$. Secondly, it is observed that not only is eviction filings correlated with violent crime, but as the level housing instability as captured by eviction filings increases, the effect of eviction filings on violent crime gets larger and that too at a faster rate in this data. Lastly, we see that it is not only that there is a positive correlation amongst the total number of eviction filings and violent crime, but there is also a strong, positive correlation between the volatility of both eviction filings and violent crime.  
+
+Though there exists significant evidence for these relationships in this dataset, based on the data issues previously mentioned, it is critical to assert key elements about the context of these findings:
+
+1. This dataset allows insight into the relationship between formal, court based eviction and estimated violent crime counts in a county.
+    + This means that the conclusions that we drew about the relationships present in this dataset, cannot be drawn about the true population using this dataset as it is. 
+2. Both the volume of violent crime and evictions in these counties is much larger than the data used in this project indicates.
+    + Mechanically, since the hierarchy rule is employed and many crimes go unreported, the true population counts for violent crime have to be larger than what is shown in this dataset. 
+    + Similarly, for the evictions data, the true population level eviction counts have to larger than what this dataset contains as it omits *unofficial* evictions. 
+      + Since this analysis is based on the number of eviction filings to capture the idea of housing instability, in the true population level, the definition of eviction filing would have to include more *abstract* things such as *attempts* to evict someone informally (i.e. bullying, blackmailing, etc.) 
+3. This dataset does not allow us to make any causal claims about the relationship between housing instability and violent crime, rather allows for a description of one type of housing instability, eviction filings, and violent crime. 
+4. There are many values in the CCA dataset that do not make logical sense (negative values). These values are not documented in the data dictionary and therefore forces us to either omit it in our analysis or allow it to affect the summation of violent crimes (i.e. a negative effect).
+5. The CCA data dictionary does not provide any information how NAs are represented. There are many $0$s in the CCA dataset, but no method of confirming whether that is truly a $0$ count, a record that is missing data, or worse: both. 
+
+However, despite the shortcomings in this dataset, there does exist enough evidence to motivate further research on the general relationship between housing instability and violent crimes. If anything, even with the limitations mentioned above, there is still statistically significant evidence to show a relationship between housing instability and violent crimes in the subset of the true population data that the dataset represents. 
+
+Specifically, further research needs to be done on whether the causal relationship, however big or small in size, is from housing instability to violent crime or from violent crime to housing instability. In addition to the direction of causality, it is also important to further examine the potential of a confounding variable that affects both housing instability and violent crime, causing the covariation demonstrated in this research project. Lastly, there is also a need to research the effects of population density on eviction and especially violent crime: Beyond just the proportional changes in violent crime counts as population changes, is there a direct effect of population density that creates conditions for more violence in a community?  
+
+<br>
+
+<br>
+
+***** 
+
+# Bibliography 
+
+***** 
+
+<div class="csl-bib-body" style="line-height: 2; margin-left: 2em; text-indent:-2em;">
+  <div class="csl-entry">About CJSC. (2012, July 24). Retrieved June 2, 2019, from State of California - Department of Justice - Office of the Attorney General website: <a href="https://oag.ca.gov/cjsc/aboutcjsc">https://oag.ca.gov/cjsc/aboutcjsc</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=webpage&amp;rft.title=About%20CJSC&amp;rft.description=CJSC%20MISSION%20STATEMENT%20The%20mandate%20of%20the%20Criminal%20Justice%20Statistics%20Center%20(CJSC)%20is%20to%20collect%20and%20report%20statistical%20data%20that%20allow%20for%20valid%20assessments%20of%20crime%20and%20the%20criminal%20justice%20process%20in%20California.&amp;rft.identifier=https%3A%2F%2Foag.ca.gov%2Fcjsc%2Faboutcjsc&amp;rft.date=2012-07-24&amp;rft.language=en"></span>
+  <div class="csl-entry">Anonymous. (2010, August 19). Aggravated Assault. Retrieved June 9, 2019, from LII / Legal Information Institute website: <a href="https://www.law.cornell.edu/wex/aggravated_assault">https://www.law.cornell.edu/wex/aggravated_assault</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=webpage&amp;rft.title=Aggravated%20Assault&amp;rft.description=DefinitionA%20criminal%C2%A0assault%C2%A0%E2%80%94%20a%20threat%20or%20physical%20act%20that%20creates%20a%20reasonable%20apprehension%20of%20imminent%20harmful%20or%20offensive%20contact%20with%20one's%20person%20%E2%80%94%20involving%20an%20additional%2C%C2%A0aggravating%20factor%2C%20such%20as%20the%20intent%20to%20inflict%20serious%20bodily%20injury%20or%20the%20use%20of%20a%20dangerous%20weapon.&amp;rft.identifier=https%3A%2F%2Fwww.law.cornell.edu%2Fwex%2Faggravated_assault&amp;rft.aulast=Anonymous&amp;rft.au=Anonymous&amp;rft.date=2010-08-19&amp;rft.language=en"></span>
+  <div class="csl-entry">Codes Display Text. (n.d.). Retrieved June 2, 2019, from <a href="https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=PEN&amp;division=&amp;title=3.&amp;part=4.&amp;chapter=1.&amp;article=2.">https://leginfo.legislature.ca.gov/faces/codes_displayText.xhtml?lawCode=PEN&amp;division=&amp;title=3.&amp;part=4.&amp;chapter=1.&amp;article=2.</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=webpage&amp;rft.title=Codes%20Display%20Text&amp;rft.identifier=https%3A%2F%2Fleginfo.legislature.ca.gov%2Ffaces%2Fcodes_displayText.xhtml%3FlawCode%3DPEN%26division%3D%26title%3D3.%26part%3D4.%26chapter%3D1.%26article%3D2."></span>
+  <div class="csl-entry">Homelessness in the Bay Area. (2017, October 23). Retrieved June 2, 2019, from SPUR website: <a href="https://www.spur.org/publications/urbanist-article/2017-10-23/homelessness-bay-area">https://www.spur.org/publications/urbanist-article/2017-10-23/homelessness-bay-area</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=webpage&amp;rft.title=Homelessness%20in%20the%20Bay%20Area&amp;rft.description=The%20Bay%20Area%20has%20one%20of%20the%20largest%20and%20least%20sheltered%20homeless%20populations%20in%20the%20country.%20Over%20the%20past%20year%2C%20the%20SPUR%20Board%20of%20Directors%20convened%20a%20study%20group%20to%20learn%20more%20about%20homelessness%20%E2%80%94%20both%20its%20causes%20and%20its%20possible%20solutions.&amp;rft.identifier=https%3A%2F%2Fwww.spur.org%2Fpublications%2Furbanist-article%2F2017-10-23%2Fhomelessness-bay-area&amp;rft.date=2017-10-23&amp;rft.language=en"></span>
+  <div class="csl-entry"><i>introduction.pdf</i>. (n.d.). Retrieved from <a href="https://oag.ca.gov/sites/all/files/agweb/pdfs/cjsc/prof10/introduction.pdf">https://oag.ca.gov/sites/all/files/agweb/pdfs/cjsc/prof10/introduction.pdf</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=attachment&amp;rft.title=introduction.pdf&amp;rft.identifier=https%3A%2F%2Foag.ca.gov%2Fsites%2Fall%2Ffiles%2Fagweb%2Fpdfs%2Fcjsc%2Fprof10%2Fintroduction.pdf"></span>
+  <div class="csl-entry">Jones, T., &amp; Maguire, M. (n.d.). <i>CRIME, COMMUNITY SAFETY AND THE POLICING OF MARGINALISED POPULATIONS: A REVIEW OF RESEARCH</i>. 25.</div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle=CRIME%2C%20COMMUNITY%20SAFETY%20AND%20THE%20POLICING%20OF%20MARGINALISED%20POPULATIONS%3A%20A%20REVIEW%20OF%20RESEARCH&amp;rft.aufirst=Trevor&amp;rft.aulast=Jones&amp;rft.au=Trevor%20Jones&amp;rft.au=Mike%20Maguire&amp;rft.pages=25&amp;rft.language=en"></span>
+  <div class="csl-entry"><i>SHA_Final_Combined.pdf</i>. (n.d.). Retrieved from <a href="http://www.hcd.ca.gov/policy-research/plans-reports/docs/SHA_Final_Combined.pdf">http://www.hcd.ca.gov/policy-research/plans-reports/docs/SHA_Final_Combined.pdf</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=attachment&amp;rft.title=SHA_Final_Combined.pdf&amp;rft.identifier=http%3A%2F%2Fwww.hcd.ca.gov%2Fpolicy-research%2Fplans-reports%2Fdocs%2FSHA_Final_Combined.pdf"></span>
+  <div class="csl-entry">State of California Department of Justice - OpenJustice. (n.d.). Retrieved June 2, 2019, from <a href="https://openjustice.doj.ca.gov/data">https://openjustice.doj.ca.gov/data</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=webpage&amp;rft.title=State%20of%20California%20Department%20of%20Justice%20-%20OpenJustice&amp;rft.identifier=https%3A%2F%2Fopenjustice.doj.ca.gov%2Fdata"></span>
+  <div class="csl-entry"><i>Uniform Crime Reporting Handbook</i>. (n.d.). 164.</div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Ajournal&amp;rft.genre=article&amp;rft.atitle=Uniform%20Crime%20Reporting%20Handbook&amp;rft.pages=164&amp;rft.language=en"></span>
+  <div class="csl-entry">Uniform Crime Reporting (UCR) Program [Folder]. (n.d.). Retrieved June 2, 2019, from Federal Bureau of Investigation website: <a href="https://www.fbi.gov/services/cjis/ucr">https://www.fbi.gov/services/cjis/ucr</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=webpage&amp;rft.title=Uniform%20Crime%20Reporting%20(UCR)%20Program&amp;rft.description=The%20UCR%20Program's%20primary%20objective%20is%20to%20generate%20reliable%20information%20for%20use%20in%20law%20enforcement%20administration%2C%20operation%2C%20and%20management.&amp;rft.identifier=https%3A%2F%2Fwww.fbi.gov%2Fservices%2Fcjis%2Fucr&amp;rft.language=en-us"></span>
+  <div class="csl-entry">Williams, B. (n.d.). Research Guides: California Government Information: CAL Justice and Crime. Retrieved June 2, 2019, from <a href="https://guides.lib.uci.edu/c.php?g=333225&amp;p=2248762">https://guides.lib.uci.edu/c.php?g=333225&amp;p=2248762</a></div>
+  <span class="Z3988" title="url_ver=Z39.88-2004&amp;ctx_ver=Z39.88-2004&amp;rfr_id=info%3Asid%2Fzotero.org%3A2&amp;rft_val_fmt=info%3Aofi%2Ffmt%3Akev%3Amtx%3Adc&amp;rft.type=webpage&amp;rft.title=Research%20Guides%3A%20California%20Government%20Information%3A%20CAL%20Justice%20and%20Crime&amp;rft.rights=Copyright%20University%20of%20California%20Irvine%202019&amp;rft.description=Research%20Guides%3A%20California%20Government%20Information%3A%20CAL%20Justice%20and%20Crime&amp;rft.identifier=https%3A%2F%2Fguides.lib.uci.edu%2Fc.php%3Fg%3D333225%26p%3D2248762&amp;rft.aufirst=Brian&amp;rft.aulast=Williams&amp;rft.au=Brian%20Williams&amp;rft.language=en"></span>
+</div>
+
+
+
+
+
+
